@@ -28,28 +28,28 @@ public:
     }
 
     template <typename T>
-        requires(sizeof(T) <= 1 && std::is_fundamental_v<T>)
+        requires(sizeof(T) == 1 && std::is_fundamental_v<T>)
     void value8(T& v)
     {
         value(v, 1);
     }
 
     template <typename T>
-        requires(sizeof(T) <= 2 && std::is_fundamental_v<T>)
+        requires(sizeof(T) == 2 && std::is_fundamental_v<T>)
     void value16(T& v)
     {
         value(v, 2);
     }
 
     template <typename T>
-        requires(sizeof(T) <= 4 && std::is_fundamental_v<T>)
+        requires(sizeof(T) == 4 && std::is_fundamental_v<T>)
     void value32(T& v)
     {
         value(v, 4);
     }
 
     template <typename T>
-        requires(sizeof(T) <= 8 && std::is_fundamental_v<T>)
+        requires(sizeof(T) == 8 && std::is_fundamental_v<T>)
     void value64(T& v)
     {
         value(v, 8);
@@ -87,7 +87,6 @@ private:
     {
         if (m_mode == Mode::serialize) {
             std::span<const std::byte> bytes = std::as_bytes(std::span<const T>(&value, 1));
-            // TODO: pad if size > sizeof T.
             std::invoke(*m_write_callback, bytes);
         } else {
             // TODO: assert enough bytes exist.
