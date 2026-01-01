@@ -32,14 +32,10 @@ int main()
 {
     SimpleStruct s { .a = 1, .b = 2, .c = 3, .d = { .thing = 1337 } };
 
-    std::vector<std::byte> bytes;
+    std::vector<std::byte> bytes = sbs::serialize_to_vector(s);
 
-    sbs::Serializer serializer { [&](std::span<const std::byte> b) { bytes.insert(bytes.end(), b.begin(), b.end()); } };
-    serializer.serialize(s);
-
-    sbs::Deserializer deserializer { bytes };
     SimpleStruct out { };
-    deserializer.deserialize(out);
+    sbs::deserialize_from_span(out, bytes);
 
     END_TESTS;
 }
