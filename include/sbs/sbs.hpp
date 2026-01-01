@@ -12,8 +12,20 @@ static_assert(CHAR_BIT == 8, "SBS only supports platforms with 8-bit bytes.");
 
 class Archive;
 
-template <typename T, typename S = Archive>
-concept Serializable = requires(T& t, S& s) { t.serialize(s); };
+template <typename Value>
+concept ValueSerializable = std::is_fundamental_v<Value>;
+
+template <typename Object, typename Archive = Archive>
+concept MethodSerializable = requires(Object& object, Archive& archive) { object.serialize(archive); };
+
+template <typename Object, typename Archive = Archive>
+concept FunctionSerializable = requires(Object& object, Archive& archive) { serialize(object, archive); };
+
+template <typename Object, typename Archive = Archive>
+concept ObjectSerializable = MethodSerializable<Object, Archive> || FunctionSerializable<Object, Archive>;
+
+template <typename T, typename Archive = Archive>
+concept Serializable = ValueSerializable<T> || ObjectSerializable<T, Archive>;
 
 using WriteCallback = std::function<void(std::span<const std::byte>)>;
 using ReadCallback = std::function<std::span<const std::byte>(size_t)>;
@@ -30,39 +42,66 @@ public:
         return Archive(read_callback);
     }
 
-    template <typename T>
-        requires(sizeof(T) == 1 && std::is_fundamental_v<T>)
-    void value8(T& v)
+    template <typename Value>
+        requires(ValueSerializable<Value> && sizeof(Value) == 1)
+    void value8(Value& value)
     {
-        value(v, 1);
+        value_common(value, 1);
+    }
+
+    template <typename Value>
+        requires(ValueSerializable<Value> && sizeof(Value) == 2)
+    void value16(Value& value)
+    {
+        value_common(value, 2);
+    }
+
+    template <typename Value>
+        requires(ValueSerializable<Value> && sizeof(Value) == 4)
+    void value32(Value& value)
+    {
+        value_common(value, 4);
+    }
+
+    template <typename Value>
+        requires(ValueSerializable<Value> && sizeof(Value) == 8)
+    void value64(Value& value)
+    {
+        value_common(value, 8);
+    }
+
+    template <typename Object>
+        requires(ObjectSerializable<Object>)
+    void object(Object& object)
+    {
+        if constexpr (MethodSerializable<Object>) {
+            object.serialize(*this);
+        } else if (FunctionSerializable<Object>) {
+            serialize(object, *this);
+        }
     }
 
     template <typename T>
-        requires(sizeof(T) == 2 && std::is_fundamental_v<T>)
-    void value16(T& v)
+        requires(Serializable<T>)
+    void generic(T& value)
     {
-        value(v, 2);
-    }
-
-    template <typename T>
-        requires(sizeof(T) == 4 && std::is_fundamental_v<T>)
-    void value32(T& v)
-    {
-        value(v, 4);
-    }
-
-    template <typename T>
-        requires(sizeof(T) == 8 && std::is_fundamental_v<T>)
-    void value64(T& v)
-    {
-        value(v, 8);
-    }
-
-    template <typename T>
-        requires(!std::is_fundamental_v<T> && Serializable<T>)
-    void object(T& o)
-    {
-        o.serialize(*this);
+        if constexpr (ValueSerializable<T>) {
+            if constexpr (sizeof(T) == 1) {
+                value8(value);
+            } else if constexpr (sizeof(T) == 2) {
+                value16(value);
+            } else if constexpr (sizeof(T) == 4) {
+                value32(value);
+            } else if constexpr (sizeof(T) == 8) {
+                value64(value);
+            } else {
+                static_assert(false, "Invalid value type size.");
+            }
+        } else if constexpr (ObjectSerializable<T>) {
+            object(value);
+        } else {
+            static_assert(false, "Invalid Serializable type.");
+        }
     }
 
 private:
@@ -84,16 +123,16 @@ private:
     {
     }
 
-    template <typename T>
-        requires(std::is_fundamental_v<T>)
-    void value(T& value, const size_t size)
+    template <typename Value>
+        requires(ValueSerializable<Value>)
+    void value_common(Value& value, const size_t size)
     {
         if (m_mode == Mode::serialize) {
-            std::span<const std::byte> bytes = std::as_bytes(std::span<const T>(&value, 1));
+            std::span<const std::byte> bytes = std::as_bytes(std::span<const Value>(&value, 1));
             std::invoke(*m_write_callback, bytes);
         } else {
             std::span<const std::byte> source = std::invoke(*m_read_callback, size);
-            std::span<std::byte> dest = std::as_writable_bytes(std::span<T>(&value, 1));
+            std::span<std::byte> dest = std::as_writable_bytes(std::span<Value>(&value, 1));
             std::ranges::copy(source, dest.begin());
         }
     }
@@ -101,10 +140,10 @@ private:
 
 template <typename T>
     requires(Serializable<T>)
-void serialize_using_callback(T& object, WriteCallback write_callback)
+void serialize_using_callback(T& value, WriteCallback write_callback)
 {
     auto archive = Archive::create_serialize(&write_callback);
-    object.serialize(archive);
+    archive.generic(value);
 }
 
 template <typename T>
@@ -117,19 +156,19 @@ void deserialize_using_callback(T& object, ReadCallback read_callback)
 
 template <typename T>
     requires(Serializable<T>)
-std::vector<std::byte> serialize_to_vector(T& object)
+std::vector<std::byte> serialize_to_vector(T& value)
 {
     std::vector<std::byte> result;
     WriteCallback callback
         = [&result](std::span<const std::byte> bytes) { result.insert(result.end(), bytes.begin(), bytes.end()); };
     auto archive = Archive::create_serialize(&callback);
-    object.serialize(archive);
+    archive.generic(value);
     return result;
 }
 
 template <typename T>
     requires(Serializable<T>)
-void deserialize_from_span(T& object, std::span<const std::byte> bytes)
+void deserialize_from_span(T& value, std::span<const std::byte> bytes)
 {
     ReadCallback callback = [&bytes](const size_t size) {
         std::span<const std::byte> subspan = bytes.subspan(0, size);
@@ -137,7 +176,7 @@ void deserialize_from_span(T& object, std::span<const std::byte> bytes)
         return subspan;
     };
     auto archive = Archive::create_deserialize(&callback);
-    object.serialize(archive);
+    archive.generic(value);
 }
 
 }
