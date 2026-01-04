@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <deque>
 #include <forward_list>
+#include <set>
 
 enum class MyEnum : uint16_t { first, second, third };
 
@@ -155,6 +156,34 @@ struct ListSerialize {
     }
 };
 
+template <
+    class Key,
+    class KeySerialize = sbs::DefaultSerialize<Key>,
+    class Compare = std::less<Key>,
+    class Allocator = std::allocator<Key>>
+    requires(sbs::Serialize<KeySerialize, Key> && std::copyable<Key>)
+struct SetSerialize {
+    void operator()(std::set<Key, Compare, Allocator>& set, const sbs::Archive& ar) const
+    {
+        if (ar.serializing()) {
+            uint64_t size = set.size();
+            ar.archive(size);
+            for (const Key& key : set) {
+                ar.archive_copy<KeySerialize>(key);
+            }
+        } else if (ar.deserializing()) {
+            set.clear();
+            uint64_t size = 0;
+            ar.archive(size);
+            for (uint64_t i = 0; i < size; ++i) {
+                Key key { };
+                ar.archive<KeySerialize>(key);
+                set.insert(std::move(key));
+            }
+        }
+    }
+};
+
 struct OtherStruct {
     uint64_t thing;
 };
@@ -177,6 +206,7 @@ struct SimpleStruct {
     std::deque<uint8_t> deque;
     std::forward_list<uint8_t> forward_list;
     std::list<uint8_t> list;
+    std::set<uint8_t> set;
 
     void serialize(const sbs::Archive& ar)
     {
@@ -192,6 +222,7 @@ struct SimpleStruct {
         ar.archive<DequeSerialize<uint8_t>>(deque);
         ar.archive<ForwardListSerialize<uint8_t>>(forward_list);
         ar.archive<ListSerialize<uint8_t>>(list);
+        ar.archive<SetSerialize<uint8_t>>(set);
     }
 };
 
@@ -209,7 +240,8 @@ int main()
         .my_enum = MyEnum::third,
         .deque = { },
         .forward_list = { },
-        .list = { }
+        .list = { },
+        .set { }
     };
 
     s.numbers.push_back(2);
@@ -235,6 +267,12 @@ int main()
     s.list.push_back(4);
     s.list.push_back(8);
     s.list.push_back(12);
+
+    s.set.insert(0);
+    s.set.insert(1);
+    s.set.insert(2);
+    s.set.insert(1);
+    s.set.insert(0);
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);

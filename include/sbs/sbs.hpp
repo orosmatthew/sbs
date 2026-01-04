@@ -80,6 +80,22 @@ public:
         std::invoke(SerializeType { }, value, *this);
     }
 
+    template <typename Type>
+        requires(DefaultSerializable<Type> && std::copyable<Type>)
+    void archive_copy(const Type& value) const
+    {
+        Type copy = value;
+        DefaultSerialize<Type> { }(copy, *this);
+    }
+
+    template <typename SerializeType, typename Type>
+        requires(Serialize<SerializeType, Type, Archive> && std::copyable<Type>)
+    void archive_copy(const Type& value) const
+    {
+        Type copy = value;
+        std::invoke(SerializeType { }, copy, *this);
+    }
+
     [[nodiscard]] Mode mode() const
     {
         return m_mode;
