@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <deque>
+#include <forward_list>
 
 enum class MyEnum : uint16_t { first, second, third };
 
@@ -102,6 +103,32 @@ struct DequeSerialize {
     }
 };
 
+template <
+    class Element,
+    class ElementSerialize = sbs::DefaultSerialize<Element>,
+    class Allocator = std::allocator<Element>>
+    requires(sbs::Serialize<ElementSerialize, Element>)
+struct ForwardListSerialize {
+    void operator()(std::forward_list<Element, Allocator>& forward_list, const sbs::Archive& ar) const
+    {
+        if (ar.serializing()) {
+            uint64_t size = std::distance(forward_list.begin(), forward_list.end());
+            ar.archive(size);
+            for (Element& element : forward_list) {
+                ar.archive<ElementSerialize>(element);
+            }
+        } else if (ar.deserializing()) {
+            forward_list.clear();
+            uint64_t size = 0;
+            ar.archive(size);
+            forward_list.resize(size);
+            for (Element& element : forward_list) {
+                ar.archive<ElementSerialize>(element);
+            }
+        }
+    }
+};
+
 struct OtherStruct {
     uint64_t thing;
 };
@@ -122,6 +149,7 @@ struct SimpleStruct {
     std::array<uint8_t, 4> nums_array;
     MyEnum my_enum;
     std::deque<uint8_t> deque;
+    std::forward_list<uint8_t> forward_list;
 
     void serialize(const sbs::Archive& ar)
     {
@@ -135,21 +163,25 @@ struct SimpleStruct {
         ar.archive<ArraySerialize<uint8_t, 4>>(nums_array);
         ar.archive(my_enum);
         ar.archive<DequeSerialize<uint8_t>>(deque);
+        ar.archive<ForwardListSerialize<uint8_t>>(forward_list);
     }
 };
 
 int main()
 {
-    SimpleStruct s { .a = 1,
-                     .b = 2,
-                     .c = 3,
-                     .d = { .thing = 1337 },
-                     .numbers = { },
-                     .multi_nums = { },
-                     .str = "Hello World!",
-                     .nums_array = { 10, 20, 30, 40 },
-                     .my_enum = MyEnum::third,
-                     .deque = { } };
+    SimpleStruct s {
+        .a = 1,
+        .b = 2,
+        .c = 3,
+        .d = { .thing = 1337 },
+        .numbers = { },
+        .multi_nums = { },
+        .str = "Hello World!",
+        .nums_array = { 10, 20, 30, 40 },
+        .my_enum = MyEnum::third,
+        .deque = { },
+        .forward_list = { }
+    };
 
     s.numbers.push_back(2);
     s.numbers.push_back(4);
@@ -166,6 +198,10 @@ int main()
     s.deque.push_back(3);
     s.deque.push_back(2);
     s.deque.push_back(1);
+
+    s.forward_list.push_front(3);
+    s.forward_list.push_front(6);
+    s.forward_list.push_front(9);
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);
