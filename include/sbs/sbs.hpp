@@ -27,8 +27,19 @@ concept ObjectSerializable = MethodSerializable<Object, Archive> || FunctionSeri
 template <typename T, typename Archive = Archive>
 concept Serializable = ValueSerializable<T> || ObjectSerializable<T, Archive>;
 
+template <typename SerializeType, typename Type, typename Archive = Archive>
+concept Serialize = requires(const SerializeType serialize, Type& value, const Archive& archive) {
+    { serialize.operator()(value, archive) } -> std::same_as<void>;
+} && std::is_default_constructible_v<SerializeType>;
+
 using WriteCallback = std::function<void(std::span<const std::byte>)>;
 using ReadCallback = std::function<std::span<const std::byte>(size_t)>;
+
+enum class Mode { serialize, deserialize };
+
+template <typename Type>
+    requires(Serializable<Type>)
+struct DefaultSerialize;
 
 class Archive {
 public:
@@ -42,71 +53,49 @@ public:
         return Archive(read_callback);
     }
 
-    template <typename Value>
-        requires(ValueSerializable<Value> && sizeof(Value) == 1)
-    void value8(Value& value)
+    template <ValueSerializable Value>
+    void archive_value(Value& value) const
     {
-        value_common(value, 1);
-    }
-
-    template <typename Value>
-        requires(ValueSerializable<Value> && sizeof(Value) == 2)
-    void value16(Value& value)
-    {
-        value_common(value, 2);
-    }
-
-    template <typename Value>
-        requires(ValueSerializable<Value> && sizeof(Value) == 4)
-    void value32(Value& value)
-    {
-        value_common(value, 4);
-    }
-
-    template <typename Value>
-        requires(ValueSerializable<Value> && sizeof(Value) == 8)
-    void value64(Value& value)
-    {
-        value_common(value, 8);
-    }
-
-    template <typename Object>
-        requires(ObjectSerializable<Object>)
-    void object(Object& object)
-    {
-        if constexpr (MethodSerializable<Object>) {
-            object.serialize(*this);
-        } else if (FunctionSerializable<Object>) {
-            serialize(object, *this);
-        }
-    }
-
-    template <typename T>
-        requires(Serializable<T>)
-    void generic(T& value)
-    {
-        if constexpr (ValueSerializable<T>) {
-            if constexpr (sizeof(T) == 1) {
-                value8(value);
-            } else if constexpr (sizeof(T) == 2) {
-                value16(value);
-            } else if constexpr (sizeof(T) == 4) {
-                value32(value);
-            } else if constexpr (sizeof(T) == 8) {
-                value64(value);
-            } else {
-                static_assert(false, "Invalid value type size.");
-            }
-        } else if constexpr (ObjectSerializable<T>) {
-            object(value);
+        if (m_mode == Mode::serialize) {
+            std::span<const std::byte> bytes = std::as_bytes(std::span<const Value>(&value, 1));
+            std::invoke(*m_write_callback, bytes);
         } else {
-            static_assert(false, "Invalid Serializable type.");
+            std::span<const std::byte> source = std::invoke(*m_read_callback, sizeof(Value));
+            std::span<std::byte> dest = std::as_writable_bytes(std::span<Value>(&value, 1));
+            std::ranges::copy(source, dest.begin());
         }
+    }
+
+    template <typename Type>
+        requires(Serializable<Type>)
+    void archive(Type& value) const
+    {
+        DefaultSerialize<Type> { }(value, *this);
+    }
+
+    template <typename SerializeType, typename Type>
+        requires(Serialize<SerializeType, Type, Archive>)
+    void archive(Type& value) const
+    {
+        std::invoke(SerializeType { }, value, *this);
+    }
+
+    [[nodiscard]] Mode mode() const
+    {
+        return m_mode;
+    }
+
+    [[nodiscard]] bool serializing() const
+    {
+        return m_mode == Mode::serialize;
+    }
+
+    [[nodiscard]] bool deserializing() const
+    {
+        return m_mode == Mode::deserialize;
     }
 
 private:
-    enum class Mode { serialize, deserialize };
-
     Mode m_mode;
     WriteCallback* m_write_callback { };
     ReadCallback* m_read_callback { };
@@ -122,18 +111,19 @@ private:
         , m_read_callback { read_callback }
     {
     }
+};
 
-    template <typename Value>
-        requires(ValueSerializable<Value>)
-    void value_common(Value& value, const size_t size)
+template <typename Type>
+    requires(Serializable<Type>)
+struct DefaultSerialize {
+    void operator()(Type& value, const Archive& archive) const
     {
-        if (m_mode == Mode::serialize) {
-            std::span<const std::byte> bytes = std::as_bytes(std::span<const Value>(&value, 1));
-            std::invoke(*m_write_callback, bytes);
-        } else {
-            std::span<const std::byte> source = std::invoke(*m_read_callback, size);
-            std::span<std::byte> dest = std::as_writable_bytes(std::span<Value>(&value, 1));
-            std::ranges::copy(source, dest.begin());
+        if constexpr (ValueSerializable<Type>) {
+            archive.archive_value(value);
+        } else if constexpr (MethodSerializable<Type>) {
+            value.serialize(archive);
+        } else if constexpr (FunctionSerializable<Type>) {
+            serialize(value, archive);
         }
     }
 };
@@ -143,7 +133,7 @@ template <typename T>
 void serialize_using_callback(T& value, WriteCallback write_callback)
 {
     auto archive = Archive::create_serialize(&write_callback);
-    archive.generic(value);
+    archive(value);
 }
 
 template <typename T>
@@ -162,7 +152,7 @@ std::vector<std::byte> serialize_to_vector(T& value)
     WriteCallback callback
         = [&result](std::span<const std::byte> bytes) { result.insert(result.end(), bytes.begin(), bytes.end()); };
     auto archive = Archive::create_serialize(&callback);
-    archive.generic(value);
+    archive.archive(value);
     return result;
 }
 
@@ -176,7 +166,7 @@ void deserialize_from_span(T& value, std::span<const std::byte> bytes)
         return subspan;
     };
     auto archive = Archive::create_deserialize(&callback);
-    archive.generic(value);
+    archive.archive(value);
 }
 
 }
