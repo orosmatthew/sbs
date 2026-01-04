@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <deque>
 #include <forward_list>
+#include <map>
 #include <set>
 
 enum class MyEnum : uint16_t { first, second, third };
@@ -16,7 +17,7 @@ template <
     class Allocator = std::allocator<Element>>
     requires(sbs::Serialize<ElementSerialize, Element>)
 struct VectorSerialize {
-    void operator()(std::vector<Element, Allocator>& vector, const sbs::Archive& ar) const
+    void operator()(std::vector<Element, Allocator>& vector, sbs::Archive& ar) const
     {
         if (ar.serializing()) {
             auto size = vector.size();
@@ -44,7 +45,7 @@ template <
     class Allocator = std::allocator<Char>>
     requires(sbs::Serialize<CharSerialize, Char>)
 struct BasicStringSerialize {
-    void operator()(std::basic_string<Char, Traits, Allocator>& string, const sbs::Archive& ar) const
+    void operator()(std::basic_string<Char, Traits, Allocator>& string, sbs::Archive& ar) const
     {
         if (ar.serializing()) {
             auto size = string.size();
@@ -70,7 +71,7 @@ using StringSerialize = BasicStringSerialize<char>;
 template <class Element, std::size_t Size, class ElementSerialize = sbs::DefaultSerialize<Element>>
     requires(sbs::Serialize<ElementSerialize, Element>)
 struct ArraySerialize {
-    void operator()(std::array<Element, Size>& array, const sbs::Archive& ar) const
+    void operator()(std::array<Element, Size>& array, sbs::Archive& ar) const
     {
         for (Element& element : array) {
             ar.archive<ElementSerialize>(element);
@@ -84,7 +85,7 @@ template <
     class Allocator = std::allocator<Element>>
     requires(sbs::Serialize<ElementSerialize, Element>)
 struct DequeSerialize {
-    void operator()(std::deque<Element, Allocator>& deque, const sbs::Archive& ar) const
+    void operator()(std::deque<Element, Allocator>& deque, sbs::Archive& ar) const
     {
         if (ar.serializing()) {
             uint64_t size = deque.size();
@@ -110,7 +111,7 @@ template <
     class Allocator = std::allocator<Element>>
     requires(sbs::Serialize<ElementSerialize, Element>)
 struct ForwardListSerialize {
-    void operator()(std::forward_list<Element, Allocator>& forward_list, const sbs::Archive& ar) const
+    void operator()(std::forward_list<Element, Allocator>& forward_list, sbs::Archive& ar) const
     {
         if (ar.serializing()) {
             uint64_t size = std::distance(forward_list.begin(), forward_list.end());
@@ -136,7 +137,7 @@ template <
     class Allocator = std::allocator<Element>>
     requires(sbs::Serialize<ElementSerialize, Element>)
 struct ListSerialize {
-    void operator()(std::list<Element, Allocator>& list, const sbs::Archive& ar) const
+    void operator()(std::list<Element, Allocator>& list, sbs::Archive& ar) const
     {
         if (ar.serializing()) {
             uint64_t size = list.size();
@@ -163,7 +164,7 @@ template <
     class Allocator = std::allocator<Key>>
     requires(sbs::Serialize<KeySerialize, Key> && std::copyable<Key>)
 struct SetSerialize {
-    void operator()(std::set<Key, Compare, Allocator>& set, const sbs::Archive& ar) const
+    void operator()(std::set<Key, Compare, Allocator>& set, sbs::Archive& ar) const
     {
         if (ar.serializing()) {
             uint64_t size = set.size();
@@ -184,11 +185,44 @@ struct SetSerialize {
     }
 };
 
+template <
+    class Key,
+    class Value,
+    class KeySerialize = sbs::DefaultSerialize<Key>,
+    class ValueSerialize = sbs::DefaultSerialize<Value>,
+    class Compare = std::less<Key>,
+    class Allocator = std::allocator<std::pair<const Key, Value>>>
+    requires(sbs::Serialize<KeySerialize, Key> && sbs::Serialize<ValueSerialize, Value> && std::copyable<Key>)
+struct MapSerialize {
+    void operator()(std::map<Key, Value, Compare, Allocator>& map, sbs::Archive& ar) const
+    {
+        if (ar.serializing()) {
+            uint64_t size = map.size();
+            ar.archive(size);
+            for (auto& [key, value] : map) {
+                ar.archive_copy<KeySerialize>(key);
+                ar.archive<ValueSerialize>(value);
+            }
+        } else {
+            map.clear();
+            uint64_t size = 0;
+            ar.archive(size);
+            for (uint64_t i = 0; i < size; ++i) {
+                Key key { };
+                ar.archive<KeySerialize>(key);
+                Value value { };
+                ar.archive<ValueSerialize>(value);
+                map[std::move(key)] = std::move(value);
+            }
+        }
+    }
+};
+
 struct OtherStruct {
     uint64_t thing;
 };
 
-void serialize(OtherStruct& o, const sbs::Archive& ar)
+void serialize(OtherStruct& o, sbs::Archive& ar)
 {
     ar.archive(o.thing);
 }
@@ -207,8 +241,9 @@ struct SimpleStruct {
     std::forward_list<uint8_t> forward_list;
     std::list<uint8_t> list;
     std::set<uint8_t> set;
+    std::map<std::string, uint16_t> map;
 
-    void serialize(const sbs::Archive& ar)
+    void serialize(sbs::Archive& ar)
     {
         ar.archive(a);
         ar.archive(b);
@@ -223,6 +258,7 @@ struct SimpleStruct {
         ar.archive<ForwardListSerialize<uint8_t>>(forward_list);
         ar.archive<ListSerialize<uint8_t>>(list);
         ar.archive<SetSerialize<uint8_t>>(set);
+        ar.archive<MapSerialize<std::string, uint16_t, StringSerialize>>(map);
     }
 };
 
@@ -241,7 +277,8 @@ int main()
         .deque = { },
         .forward_list = { },
         .list = { },
-        .set { }
+        .set { },
+        .map { }
     };
 
     s.numbers.push_back(2);
@@ -273,6 +310,11 @@ int main()
     s.set.insert(2);
     s.set.insert(1);
     s.set.insert(0);
+
+    s.map["one"] = 1;
+    s.map["two"] = 4;
+    s.map["three"] = 9;
+    s.map["four"] = 16;
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);

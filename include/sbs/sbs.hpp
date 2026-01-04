@@ -54,7 +54,7 @@ public:
     }
 
     template <ValueSerializable Value>
-    void archive_value(Value& value) const
+    void archive_value(Value& value)
     {
         if (m_mode == Mode::serialize) {
             std::span<const std::byte> bytes = std::as_bytes(std::span<const Value>(&value, 1));
@@ -68,21 +68,21 @@ public:
 
     template <typename Type>
         requires(DefaultSerializable<Type>)
-    void archive(Type& value) const
+    void archive(Type& value)
     {
         DefaultSerialize<Type> { }(value, *this);
     }
 
     template <typename SerializeType, typename Type>
         requires(Serialize<SerializeType, Type, Archive>)
-    void archive(Type& value) const
+    void archive(Type& value)
     {
-        std::invoke(SerializeType { }, value, *this);
+        SerializeType { }(value, *this);
     }
 
     template <typename Type>
         requires(DefaultSerializable<Type> && std::copyable<Type>)
-    void archive_copy(const Type& value) const
+    void archive_copy(const Type& value)
     {
         Type copy = value;
         DefaultSerialize<Type> { }(copy, *this);
@@ -90,7 +90,7 @@ public:
 
     template <typename SerializeType, typename Type>
         requires(Serialize<SerializeType, Type, Archive> && std::copyable<Type>)
-    void archive_copy(const Type& value) const
+    void archive_copy(const Type& value)
     {
         Type copy = value;
         std::invoke(SerializeType { }, copy, *this);
@@ -132,7 +132,7 @@ private:
 template <typename Type>
     requires(DefaultSerializable<Type>)
 struct DefaultSerialize {
-    void operator()(Type& value, const Archive& archive) const
+    void operator()(Type& value, Archive& archive) const
     {
         if constexpr (ValueSerializable<Type>) {
             archive.archive_value(value);
