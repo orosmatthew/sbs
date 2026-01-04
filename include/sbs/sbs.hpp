@@ -28,7 +28,7 @@ template <typename T, typename Archive = Archive>
 concept DefaultSerializable = ValueSerializable<T> || ObjectSerializable<T, Archive>;
 
 template <typename SerializeType, typename Type, typename Archive = Archive>
-concept Serialize = requires(const SerializeType serialize, Type& value, const Archive& archive) {
+concept Serialize = requires(SerializeType serialize, Type& value, Archive& archive) {
     { serialize.operator()(value, archive) } -> std::same_as<void>;
 } && std::is_default_constructible_v<SerializeType>;
 
