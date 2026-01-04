@@ -13,7 +13,7 @@ static_assert(CHAR_BIT == 8, "SBS only supports platforms with 8-bit bytes.");
 class Archive;
 
 template <typename Value>
-concept ValueSerializable = std::is_fundamental_v<Value>;
+concept ValueSerializable = std::is_fundamental_v<Value> || std::is_enum_v<Value>;
 
 template <typename Object, typename Archive = Archive>
 concept MethodSerializable = requires(Object& object, Archive& archive) { object.serialize(archive); };
@@ -25,7 +25,7 @@ template <typename Object, typename Archive = Archive>
 concept ObjectSerializable = MethodSerializable<Object, Archive> || FunctionSerializable<Object, Archive>;
 
 template <typename T, typename Archive = Archive>
-concept Serializable = ValueSerializable<T> || ObjectSerializable<T, Archive>;
+concept DefaultSerializable = ValueSerializable<T> || ObjectSerializable<T, Archive>;
 
 template <typename SerializeType, typename Type, typename Archive = Archive>
 concept Serialize = requires(const SerializeType serialize, Type& value, const Archive& archive) {
@@ -38,7 +38,7 @@ using ReadCallback = std::function<std::span<const std::byte>(size_t)>;
 enum class Mode { serialize, deserialize };
 
 template <typename Type>
-    requires(Serializable<Type>)
+    requires(DefaultSerializable<Type>)
 struct DefaultSerialize;
 
 class Archive {
@@ -67,7 +67,7 @@ public:
     }
 
     template <typename Type>
-        requires(Serializable<Type>)
+        requires(DefaultSerializable<Type>)
     void archive(Type& value) const
     {
         DefaultSerialize<Type> { }(value, *this);
@@ -114,7 +114,7 @@ private:
 };
 
 template <typename Type>
-    requires(Serializable<Type>)
+    requires(DefaultSerializable<Type>)
 struct DefaultSerialize {
     void operator()(Type& value, const Archive& archive) const
     {
@@ -129,7 +129,7 @@ struct DefaultSerialize {
 };
 
 template <typename T>
-    requires(Serializable<T>)
+    requires(DefaultSerializable<T>)
 void serialize_using_callback(T& value, WriteCallback write_callback)
 {
     auto archive = Archive::create_serialize(&write_callback);
@@ -137,7 +137,7 @@ void serialize_using_callback(T& value, WriteCallback write_callback)
 }
 
 template <typename T>
-    requires(Serializable<T>)
+    requires(DefaultSerializable<T>)
 void deserialize_using_callback(T& object, ReadCallback read_callback)
 {
     auto archive = Archive::create_deserialize(&read_callback);
@@ -145,7 +145,7 @@ void deserialize_using_callback(T& object, ReadCallback read_callback)
 }
 
 template <typename T>
-    requires(Serializable<T>)
+    requires(DefaultSerializable<T>)
 std::vector<std::byte> serialize_to_vector(T& value)
 {
     std::vector<std::byte> result;
@@ -157,7 +157,7 @@ std::vector<std::byte> serialize_to_vector(T& value)
 }
 
 template <typename T>
-    requires(Serializable<T>)
+    requires(DefaultSerializable<T>)
 void deserialize_from_span(T& value, std::span<const std::byte> bytes)
 {
     ReadCallback callback = [&bytes](const size_t size) {
