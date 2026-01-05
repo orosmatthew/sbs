@@ -8,6 +8,7 @@
 #include <forward_list>
 #include <list>
 #include <map>
+#include <optional>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
@@ -419,6 +420,30 @@ struct UnorderedMultimapSerialize {
     }
 };
 
+template <class Value, class ValueSerialize = sbs::DefaultSerialize<Value>>
+    requires(sbs::Serialize<ValueSerialize, Value> && std::is_default_constructible_v<Value>)
+struct OptionalSerialize {
+    void operator()(std::optional<Value>& optional, sbs::Archive& ar) const
+    {
+        if (ar.serializing()) {
+            const bool has_value = optional.has_value();
+            ar.archive_copy(has_value);
+            if (has_value) {
+                ar.archive<ValueSerialize>(optional.value());
+            }
+        } else {
+            optional.reset();
+            bool has_value = false;
+            ar.archive(has_value);
+            if (has_value) {
+                auto value = Value();
+                ar.archive<ValueSerialize>(value);
+                optional = value;
+            }
+        }
+    }
+};
+
 struct OtherStruct {
     uint64_t thing;
 };
@@ -449,6 +474,7 @@ struct SimpleStruct {
     std::unordered_map<std::string, uint16_t> unordered_map;
     std::unordered_multiset<uint8_t> unordered_multiset;
     std::unordered_multimap<std::string, uint16_t> unordered_multimap;
+    std::optional<uint8_t> optional;
 
     void serialize(sbs::Archive& ar)
     {
@@ -472,6 +498,7 @@ struct SimpleStruct {
         ar.archive<UnorderedMapSerialize<std::string, uint16_t, StringSerialize>>(unordered_map);
         ar.archive<UnorderedMultisetSerialize<uint8_t>>(unordered_multiset);
         ar.archive<UnorderedMultimapSerialize<std::string, uint16_t, StringSerialize>>(unordered_multimap);
+        ar.archive<OptionalSerialize<uint8_t>>(optional);
     }
 };
 
@@ -574,6 +601,8 @@ int main()
     s.unordered_multimap.insert({ "three", 9 });
     s.unordered_multimap.insert({ "two", 2 });
     s.unordered_multimap.insert({ "four", 16 });
+
+    s.optional = 8;
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);
