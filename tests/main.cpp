@@ -247,6 +247,41 @@ struct MultisetSerialize {
     }
 };
 
+template <
+    class Key,
+    class Value,
+    class KeySerialize = sbs::DefaultSerialize<Key>,
+    class ValueSerialize = sbs::DefaultSerialize<Value>,
+    class Compare = std::less<Key>,
+    class Allocator = std::allocator<std::pair<const Key, Value>>>
+    requires(
+        sbs::Serialize<KeySerialize, Key> && sbs::Serialize<ValueSerialize, Value> && std::copyable<Key>
+        && std::is_default_constructible_v<Key> && std::is_default_constructible_v<Value>)
+struct MultimapSerialize {
+    void operator()(std::multimap<Key, Value, Compare, Allocator>& multimap, sbs::Archive& ar) const
+    {
+        if (ar.serializing()) {
+            const uint64_t size = multimap.size();
+            ar.archive_copy(size);
+            for (auto& [key, value] : multimap) {
+                ar.archive_copy<KeySerialize>(key);
+                ar.archive<ValueSerialize>(value);
+            }
+        } else {
+            multimap.clear();
+            uint64_t size = 0;
+            ar.archive(size);
+            for (uint64_t i = 0; i < size; ++i) {
+                auto key = Key();
+                ar.archive<KeySerialize>(key);
+                auto value = Value();
+                ar.archive<ValueSerialize>(value);
+                multimap.insert({ std::move(key), std::move(value) });
+            }
+        }
+    }
+};
+
 struct OtherStruct {
     uint64_t thing;
 };
@@ -272,6 +307,7 @@ struct SimpleStruct {
     std::set<uint8_t> set;
     std::map<std::string, uint16_t> map;
     std::multiset<uint8_t> multiset;
+    std::multimap<std::string, uint16_t> multimap;
 
     void serialize(sbs::Archive& ar)
     {
@@ -290,6 +326,7 @@ struct SimpleStruct {
         ar.archive<SetSerialize<uint8_t>>(set);
         ar.archive<MapSerialize<std::string, uint16_t, StringSerialize>>(map);
         ar.archive<MultisetSerialize<uint8_t>>(multiset);
+        ar.archive<MultimapSerialize<std::string, uint16_t, StringSerialize>>(multimap);
     }
 };
 
@@ -310,7 +347,8 @@ int main()
         .list = { },
         .set { },
         .map { },
-        .multiset { }
+        .multiset { },
+        .multimap { }
     };
 
     s.numbers.push_back(2);
@@ -353,6 +391,15 @@ int main()
     s.multiset.insert(2);
     s.multiset.insert(1);
     s.multiset.insert(0);
+
+    s.multimap.insert({ "one", 1 });
+    s.multimap.insert({ "three", 3 });
+    s.multimap.insert({ "two", 4 });
+    s.multimap.insert({ "one", 1 });
+    s.multimap.insert({ "four", 4 });
+    s.multimap.insert({ "three", 9 });
+    s.multimap.insert({ "two", 2 });
+    s.multimap.insert({ "four", 16 });
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);
