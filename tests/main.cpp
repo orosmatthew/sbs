@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <deque>
 #include <forward_list>
+#include <list>
 #include <map>
 #include <set>
 
@@ -218,6 +219,34 @@ struct MapSerialize {
     }
 };
 
+template <
+    class Key,
+    class KeySerialize = sbs::DefaultSerialize<Key>,
+    class Compare = std::less<Key>,
+    class Allocator = std::allocator<Key>>
+    requires(sbs::Serialize<KeySerialize, Key> && std::copyable<Key> && std::is_default_constructible_v<Key>)
+struct MultisetSerialize {
+    void operator()(std::multiset<Key, Compare, Allocator>& multiset, sbs::Archive& ar) const
+    {
+        if (ar.serializing()) {
+            uint64_t size = multiset.size();
+            ar.archive(size);
+            for (const Key& key : multiset) {
+                ar.archive_copy<KeySerialize>(key);
+            }
+        } else {
+            multiset.clear();
+            uint64_t size = 0;
+            ar.archive(size);
+            for (uint64_t i = 0; i < size; ++i) {
+                Key key { };
+                ar.archive<KeySerialize>(key);
+                multiset.insert(std::move(key));
+            }
+        }
+    }
+};
+
 struct OtherStruct {
     uint64_t thing;
 };
@@ -242,6 +271,7 @@ struct SimpleStruct {
     std::list<uint8_t> list;
     std::set<uint8_t> set;
     std::map<std::string, uint16_t> map;
+    std::multiset<uint8_t> multiset;
 
     void serialize(sbs::Archive& ar)
     {
@@ -259,6 +289,7 @@ struct SimpleStruct {
         ar.archive<ListSerialize<uint8_t>>(list);
         ar.archive<SetSerialize<uint8_t>>(set);
         ar.archive<MapSerialize<std::string, uint16_t, StringSerialize>>(map);
+        ar.archive<MultisetSerialize<uint8_t>>(multiset);
     }
 };
 
@@ -278,7 +309,8 @@ int main()
         .forward_list = { },
         .list = { },
         .set { },
-        .map { }
+        .map { },
+        .multiset { }
     };
 
     s.numbers.push_back(2);
@@ -315,6 +347,12 @@ int main()
     s.map["two"] = 4;
     s.map["three"] = 9;
     s.map["four"] = 16;
+
+    s.multiset.insert(0);
+    s.multiset.insert(1);
+    s.multiset.insert(2);
+    s.multiset.insert(1);
+    s.multiset.insert(0);
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);
