@@ -9,6 +9,7 @@
 #include <list>
 #include <map>
 #include <set>
+#include <unordered_set>
 
 enum class MyEnum : uint16_t { first, second, third };
 
@@ -282,6 +283,36 @@ struct MultimapSerialize {
     }
 };
 
+template <
+    class Key,
+    class KeySerialize = sbs::DefaultSerialize<Key>,
+    class Hash = std::hash<Key>,
+    class KeyEqual = std::equal_to<Key>,
+    class Allocator = std::allocator<Key>>
+    requires(sbs::Serialize<KeySerialize, Key> && std::copyable<Key> && std::is_default_constructible_v<Key>)
+struct UnorderedSetSerialize {
+    void operator()(std::unordered_set<Key, Hash, KeyEqual, Allocator>& unordered_set, sbs::Archive& ar) const
+    {
+        if (ar.serializing()) {
+            const uint64_t size = unordered_set.size();
+            ar.archive_copy(size);
+            for (const Key& key : unordered_set) {
+                ar.archive_copy<KeySerialize>(key);
+            }
+        } else {
+            unordered_set.clear();
+            uint64_t size = 0;
+            ar.archive(size);
+            unordered_set.reserve(size);
+            for (uint64_t i = 0; i < size; ++i) {
+                auto key = Key();
+                ar.archive<KeySerialize>(key);
+                unordered_set.insert(std::move(key));
+            }
+        }
+    }
+};
+
 struct OtherStruct {
     uint64_t thing;
 };
@@ -308,6 +339,7 @@ struct SimpleStruct {
     std::map<std::string, uint16_t> map;
     std::multiset<uint8_t> multiset;
     std::multimap<std::string, uint16_t> multimap;
+    std::unordered_set<std::string> unordered_set;
 
     void serialize(sbs::Archive& ar)
     {
@@ -327,6 +359,7 @@ struct SimpleStruct {
         ar.archive<MapSerialize<std::string, uint16_t, StringSerialize>>(map);
         ar.archive<MultisetSerialize<uint8_t>>(multiset);
         ar.archive<MultimapSerialize<std::string, uint16_t, StringSerialize>>(multimap);
+        ar.archive<UnorderedSetSerialize<std::string, StringSerialize>>(unordered_set);
     }
 };
 
@@ -348,7 +381,8 @@ int main()
         .set { },
         .map { },
         .multiset { },
-        .multimap { }
+        .multimap { },
+        .unordered_set { }
     };
 
     s.numbers.push_back(2);
@@ -400,6 +434,12 @@ int main()
     s.multimap.insert({ "three", 9 });
     s.multimap.insert({ "two", 2 });
     s.multimap.insert({ "four", 16 });
+
+    s.unordered_set.insert("zero");
+    s.unordered_set.insert("one");
+    s.unordered_set.insert("two");
+    s.unordered_set.insert("one");
+    s.unordered_set.insert("zero");
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);
