@@ -35,7 +35,7 @@ template <class Type>
 concept DefaultSerializable = ValueSerializable<Type> || ObjectSerializable<Type>;
 
 template <class SerializeType, class Type>
-concept Serialize = requires(SerializeType serialize, Type& value, Archive& archive) {
+concept Serializer = requires(SerializeType serialize, Type& value, Archive& archive) {
     { serialize.operator()(value, archive) } -> std::same_as<void>;
 } && std::is_default_constructible_v<SerializeType>;
 
@@ -46,7 +46,7 @@ enum class Mode { serialize, deserialize };
 
 template <class Type>
     requires(DefaultSerializable<Type>)
-struct DefaultSerialize;
+struct DefaultSerializer;
 
 class Archive {
 public:
@@ -77,11 +77,11 @@ public:
         requires(DefaultSerializable<Type>)
     void archive(Type& value)
     {
-        DefaultSerialize<Type> { }(value, *this);
+        DefaultSerializer<Type> { }(value, *this);
     }
 
     template <class SerializeType, class Type>
-        requires(Serialize<SerializeType, Type>)
+        requires(Serializer<SerializeType, Type>)
     void archive(Type& value)
     {
         SerializeType { }(value, *this);
@@ -92,11 +92,11 @@ public:
     void archive_copy(const Type& value)
     {
         Type copy = value;
-        DefaultSerialize<Type> { }(copy, *this);
+        DefaultSerializer<Type> { }(copy, *this);
     }
 
     template <class SerializeType, class Type>
-        requires(Serialize<SerializeType, Type> && std::copyable<Type>)
+        requires(Serializer<SerializeType, Type> && std::copyable<Type>)
     void archive_copy(const Type& value)
     {
         Type copy = value;
@@ -138,7 +138,7 @@ private:
 
 template <class Type>
     requires(DefaultSerializable<Type>)
-struct DefaultSerialize {
+struct DefaultSerializer {
     void operator()(Type& value, Archive& archive) const
     {
         if constexpr (ValueSerializable<Type>) {
