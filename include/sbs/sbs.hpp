@@ -17,7 +17,7 @@ concept IntegerSerializable
     = std::is_integral_v<Type> || (std::is_enum_v<Type> && std::is_integral_v<std::underlying_type_t<Type>>);
 
 template <class Type>
-concept FloatSerializable = std::is_floating_point_v<Type> && std::numeric_limits<Type>::is_iec559;
+concept FloatSerializable = std::is_floating_point_v<Type>;
 
 template <class Type>
 concept ValueSerializable = IntegerSerializable<Type> || FloatSerializable<Type>;
