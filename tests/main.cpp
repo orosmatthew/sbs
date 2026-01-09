@@ -3,6 +3,7 @@
 #include "test.hpp"
 
 #include <array>
+#include <bitset>
 #include <chrono>
 #include <complex>
 #include <cstdint>
@@ -566,6 +567,36 @@ struct ComplexSerializer {
     }
 };
 
+template <std::size_t bits>
+struct BitsetSerializer {
+    void operator()(std::bitset<bits>& bitset, sbs::Archive& ar) const
+    {
+        if (ar.serializing()) {
+            uint8_t buffer = 0;
+            for (size_t i = 0; i < bitset.size(); ++i) {
+                if (bitset.test(i)) {
+                    buffer |= 1 << (i % 8);
+                }
+                if (i % 8 == 7 || i == bitset.size() - 1) {
+                    ar.archive<uint8_t>(buffer);
+                    buffer = 0;
+                }
+            }
+        } else {
+            bitset.reset();
+            uint8_t buffer = 0;
+            for (size_t i = 0; i < bitset.size(); ++i) {
+                if (i % 8 == 0) {
+                    ar.archive<uint8_t>(buffer);
+                }
+                if (buffer & 1 << i % 8) {
+                    bitset.set(i, true);
+                }
+            }
+        }
+    }
+};
+
 struct OtherStruct {
     uint64_t thing;
 };
@@ -604,43 +635,45 @@ struct SimpleStruct {
     std::chrono::duration<double> duration;
     std::chrono::time_point<std::chrono::steady_clock> time_point;
     std::complex<float> complex;
+    std::bitset<200> bitset;
 
     void serialize(sbs::Archive& ar)
     {
-        ar.archive(a);
-        ar.archive(b);
-        ar.archive(c);
-        ar.archive(d);
-        ar.archive<VectorSerializer<uint16_t>>(numbers);
-        ar.archive<VectorSerializer<std::vector<uint8_t>, VectorSerializer<uint8_t>>>(multi_nums);
-        ar.archive<StringSerializer>(str);
-        ar.archive<ArraySerializer<uint8_t, 4>>(nums_array);
-        ar.archive(my_enum);
-        ar.archive<DequeSerializer<uint8_t>>(deque);
-        ar.archive<ForwardListSerializer<uint8_t>>(forward_list);
-        ar.archive<ListSerializer<uint8_t>>(list);
-        ar.archive<SetSerializer<uint8_t>>(set);
-        ar.archive<MapSerializer<std::string, uint16_t, StringSerializer>>(map);
-        ar.archive<MultisetSerializer<uint8_t>>(multiset);
-        ar.archive<MultimapSerializer<std::string, uint16_t, StringSerializer>>(multimap);
-        ar.archive<UnorderedSetSerializer<std::string, StringSerializer>>(unordered_set);
-        ar.archive<UnorderedMapSerializer<std::string, uint16_t, StringSerializer>>(unordered_map);
-        ar.archive<UnorderedMultisetSerializer<uint8_t>>(unordered_multiset);
-        ar.archive<UnorderedMultimapSerializer<std::string, uint16_t, StringSerializer>>(unordered_multimap);
-        ar.archive<OptionalSerializer<uint8_t>>(optional);
-        ar.archive<VariantDefaultSerializer<uint8_t, float>>(variant1);
-        ar.archive<VariantDefaultSerializer<uint8_t, float>>(variant2);
-        ar.archive<PairSerializer<uint8_t, std::string, sbs::DefaultSerializer<uint8_t>, StringSerializer>>(pair);
-        ar.archive<TupleDefaultSerializer<int, double, float>>(tuple);
-        ar.archive<ChronoDurationSerializer<double>>(duration);
-        ar.archive<ChronoTimePointSerializer<
-            std::chrono::steady_clock,
-            std::chrono::steady_clock::duration,
-            ChronoDurationSerializer<
-                std::chrono::steady_clock::duration::rep,
-                sbs::DefaultSerializer<std::chrono::steady_clock::rep>,
-                std::chrono::steady_clock::duration::period>>>(time_point);
-        ar.archive<ComplexSerializer<float>>(complex);
+        // ar.archive(a);
+        // ar.archive(b);
+        // ar.archive(c);
+        // ar.archive(d);
+        // ar.archive<VectorSerializer<uint16_t>>(numbers);
+        // ar.archive<VectorSerializer<std::vector<uint8_t>, VectorSerializer<uint8_t>>>(multi_nums);
+        // ar.archive<StringSerializer>(str);
+        // ar.archive<ArraySerializer<uint8_t, 4>>(nums_array);
+        // ar.archive(my_enum);
+        // ar.archive<DequeSerializer<uint8_t>>(deque);
+        // ar.archive<ForwardListSerializer<uint8_t>>(forward_list);
+        // ar.archive<ListSerializer<uint8_t>>(list);
+        // ar.archive<SetSerializer<uint8_t>>(set);
+        // ar.archive<MapSerializer<std::string, uint16_t, StringSerializer>>(map);
+        // ar.archive<MultisetSerializer<uint8_t>>(multiset);
+        // ar.archive<MultimapSerializer<std::string, uint16_t, StringSerializer>>(multimap);
+        // ar.archive<UnorderedSetSerializer<std::string, StringSerializer>>(unordered_set);
+        // ar.archive<UnorderedMapSerializer<std::string, uint16_t, StringSerializer>>(unordered_map);
+        // ar.archive<UnorderedMultisetSerializer<uint8_t>>(unordered_multiset);
+        // ar.archive<UnorderedMultimapSerializer<std::string, uint16_t, StringSerializer>>(unordered_multimap);
+        // ar.archive<OptionalSerializer<uint8_t>>(optional);
+        // ar.archive<VariantDefaultSerializer<uint8_t, float>>(variant1);
+        // ar.archive<VariantDefaultSerializer<uint8_t, float>>(variant2);
+        // ar.archive<PairSerializer<uint8_t, std::string, sbs::DefaultSerializer<uint8_t>, StringSerializer>>(pair);
+        // ar.archive<TupleDefaultSerializer<int, double, float>>(tuple);
+        // ar.archive<ChronoDurationSerializer<double>>(duration);
+        // ar.archive<ChronoTimePointSerializer<
+        //     std::chrono::steady_clock,
+        //     std::chrono::steady_clock::duration,
+        //     ChronoDurationSerializer<
+        //         std::chrono::steady_clock::duration::rep,
+        //         sbs::DefaultSerializer<std::chrono::steady_clock::rep>,
+        //         std::chrono::steady_clock::duration::period>>>(time_point);
+        // ar.archive<ComplexSerializer<float>>(complex);
+        ar.archive<BitsetSerializer<200>>(bitset);
     }
 };
 
@@ -756,6 +789,13 @@ int main()
     s.time_point = std::chrono::steady_clock::now();
 
     s.complex = std::complex { 2.4f, -3.0f };
+
+    s.bitset = { };
+    s.bitset.set(5, true);
+    s.bitset.set(10, true);
+    s.bitset.set(100, true);
+    s.bitset.set(150, true);
+    s.bitset.set(198, true);
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);
