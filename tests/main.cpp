@@ -4,6 +4,7 @@
 
 #include <array>
 #include <chrono>
+#include <complex>
 #include <cstdint>
 #include <deque>
 #include <forward_list>
@@ -530,7 +531,6 @@ struct ChronoTimePointSerializer {
 
 template <class Tuple, std::size_t Index = 0>
 void serialize_tuple(Tuple& tuple, sbs::Archive& ar)
-
 {
     if constexpr (Index < std::tuple_size_v<Tuple>) {
         ar.archive(std::get<Index>(tuple));
@@ -544,6 +544,25 @@ struct TupleDefaultSerializer {
     void operator()(std::tuple<Types...>& tuple, sbs::Archive& ar) const
     {
         serialize_tuple(tuple, ar);
+    }
+};
+
+template <class Type, class TypeSerializer = sbs::DefaultSerializer<Type>>
+    requires(sbs::Serializer<TypeSerializer, Type> && std::copyable<Type> && std::is_default_constructible_v<Type>)
+struct ComplexSerializer {
+    void operator()(std::complex<Type>& complex, sbs::Archive& ar) const
+    {
+        if (ar.serializing()) {
+            ar.archive_copy<TypeSerializer>(complex.real());
+            ar.archive_copy<TypeSerializer>(complex.imag());
+        } else {
+            auto real = Type();
+            ar.archive<TypeSerializer>(real);
+            complex.real(real);
+            auto imag = Type();
+            ar.archive<TypeSerializer>(imag);
+            complex.imag(imag);
+        }
     }
 };
 
@@ -584,6 +603,7 @@ struct SimpleStruct {
     std::tuple<int, double, float> tuple;
     std::chrono::duration<double> duration;
     std::chrono::time_point<std::chrono::steady_clock> time_point;
+    std::complex<float> complex;
 
     void serialize(sbs::Archive& ar)
     {
@@ -620,6 +640,7 @@ struct SimpleStruct {
                 std::chrono::steady_clock::duration::rep,
                 sbs::DefaultSerializer<std::chrono::steady_clock::rep>,
                 std::chrono::steady_clock::duration::period>>>(time_point);
+        ar.archive<ComplexSerializer<float>>(complex);
     }
 };
 
@@ -733,6 +754,8 @@ int main()
 
     s.duration = std::chrono::duration<double>(37);
     s.time_point = std::chrono::steady_clock::now();
+
+    s.complex = std::complex { 2.4f, -3.0f };
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);
