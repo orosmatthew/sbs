@@ -477,6 +477,20 @@ struct VariantDefaultSerializer {
     }
 };
 
+template <
+    class First,
+    class Second,
+    class FirstSerializer = sbs::DefaultSerializer<First>,
+    class SecondSerializer = sbs::DefaultSerializer<Second>>
+    requires(sbs::Serializer<FirstSerializer, First> && sbs::Serializer<SecondSerializer, Second>)
+struct PairSerializer {
+    void operator()(std::pair<First, Second>& pair, sbs::Archive& ar) const
+    {
+        ar.archive<FirstSerializer>(pair.first);
+        ar.archive<SecondSerializer>(pair.second);
+    }
+};
+
 struct OtherStruct {
     uint64_t thing;
 };
@@ -510,6 +524,7 @@ struct SimpleStruct {
     std::optional<uint8_t> optional;
     std::variant<uint8_t, float> variant1;
     std::variant<uint8_t, float> variant2;
+    std::pair<uint8_t, std::string> pair;
 
     void serialize(sbs::Archive& ar)
     {
@@ -536,6 +551,7 @@ struct SimpleStruct {
         ar.archive<OptionalSerializer<uint8_t>>(optional);
         ar.archive<VariantDefaultSerializer<uint8_t, float>>(variant1);
         ar.archive<VariantDefaultSerializer<uint8_t, float>>(variant2);
+        ar.archive<PairSerializer<uint8_t, std::string, sbs::DefaultSerializer<uint8_t>, StringSerializer>>(pair);
     }
 };
 
@@ -643,6 +659,8 @@ int main()
 
     s.variant1 = static_cast<uint8_t>(24);
     s.variant2 = 25.5f;
+
+    s.pair = { 8, "eight" };
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);
