@@ -12,6 +12,7 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <variant>
 
 enum class MyEnum : uint16_t { first, second, third };
@@ -491,6 +492,24 @@ struct PairSerializer {
     }
 };
 
+template <class Tuple, std::size_t Index = 0>
+void serialize_tuple(Tuple& tuple, sbs::Archive& ar)
+{
+    if constexpr (Index < std::tuple_size_v<Tuple>) {
+        ar.archive(std::get<Index>(tuple));
+        serialize_tuple<Tuple, Index + 1>(tuple, ar);
+    }
+}
+
+template <class... Types>
+    requires(sbs::DefaultSerializable<Types> && ...)
+struct TupleDefaultSerializer {
+    void operator()(std::tuple<Types...>& tuple, sbs::Archive& ar) const
+    {
+        serialize_tuple(tuple, ar);
+    }
+};
+
 struct OtherStruct {
     uint64_t thing;
 };
@@ -525,6 +544,7 @@ struct SimpleStruct {
     std::variant<uint8_t, float> variant1;
     std::variant<uint8_t, float> variant2;
     std::pair<uint8_t, std::string> pair;
+    std::tuple<int, double, float> tuple;
 
     void serialize(sbs::Archive& ar)
     {
@@ -552,6 +572,7 @@ struct SimpleStruct {
         ar.archive<VariantDefaultSerializer<uint8_t, float>>(variant1);
         ar.archive<VariantDefaultSerializer<uint8_t, float>>(variant2);
         ar.archive<PairSerializer<uint8_t, std::string, sbs::DefaultSerializer<uint8_t>, StringSerializer>>(pair);
+        ar.archive<TupleDefaultSerializer<int, double, float>>(tuple);
     }
 };
 
@@ -661,6 +682,7 @@ int main()
     s.variant2 = 25.5f;
 
     s.pair = { 8, "eight" };
+    s.tuple = { 7, 7.00000001, 7.5f };
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);
