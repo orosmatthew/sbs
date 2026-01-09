@@ -3,12 +3,14 @@
 #include "test.hpp"
 
 #include <array>
+#include <chrono>
 #include <cstdint>
 #include <deque>
 #include <forward_list>
 #include <list>
 #include <map>
 #include <optional>
+#include <ratio>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
@@ -492,8 +494,43 @@ struct PairSerializer {
     }
 };
 
+template <class Tick, class TickSerializer = sbs::DefaultSerializer<Tick>, class Period = std::ratio<1>>
+    requires(sbs::Serializer<TickSerializer, Tick> && std::copyable<Tick> && std::is_default_constructible_v<Tick>)
+struct ChronoDurationSerializer {
+    void operator()(std::chrono::duration<Tick, Period>& duration, sbs::Archive& ar) const
+    {
+        if (ar.serializing()) {
+            const Tick ticks = duration.count();
+            ar.archive_copy<TickSerializer>(ticks);
+        } else {
+            auto ticks = Tick();
+            ar.archive<TickSerializer>(ticks);
+            duration = std::chrono::duration<Tick, Period> { ticks };
+        }
+    }
+};
+
+template <class Clock, class Duration = Clock::duration, class DurationSerializer = sbs::DefaultSerializer<Duration>>
+    requires(
+        sbs::Serializer<DurationSerializer, Duration> && std::copyable<Duration>
+        && std::is_default_constructible_v<Duration>)
+struct ChronoTimePointSerializer {
+    void operator()(std::chrono::time_point<Clock, Duration>& time_point, sbs::Archive& ar) const
+    {
+        if (ar.serializing()) {
+            const Duration ticks = time_point.time_since_epoch();
+            ar.archive_copy<DurationSerializer>(ticks);
+        } else {
+            auto duration = Duration();
+            ar.archive<DurationSerializer>(duration);
+            time_point = std::chrono::time_point<Clock, Duration> { duration };
+        }
+    }
+};
+
 template <class Tuple, std::size_t Index = 0>
 void serialize_tuple(Tuple& tuple, sbs::Archive& ar)
+
 {
     if constexpr (Index < std::tuple_size_v<Tuple>) {
         ar.archive(std::get<Index>(tuple));
@@ -545,6 +582,8 @@ struct SimpleStruct {
     std::variant<uint8_t, float> variant2;
     std::pair<uint8_t, std::string> pair;
     std::tuple<int, double, float> tuple;
+    std::chrono::duration<double> duration;
+    std::chrono::time_point<std::chrono::steady_clock> time_point;
 
     void serialize(sbs::Archive& ar)
     {
@@ -573,6 +612,14 @@ struct SimpleStruct {
         ar.archive<VariantDefaultSerializer<uint8_t, float>>(variant2);
         ar.archive<PairSerializer<uint8_t, std::string, sbs::DefaultSerializer<uint8_t>, StringSerializer>>(pair);
         ar.archive<TupleDefaultSerializer<int, double, float>>(tuple);
+        ar.archive<ChronoDurationSerializer<double>>(duration);
+        ar.archive<ChronoTimePointSerializer<
+            std::chrono::steady_clock,
+            std::chrono::steady_clock::duration,
+            ChronoDurationSerializer<
+                std::chrono::steady_clock::duration::rep,
+                sbs::DefaultSerializer<std::chrono::steady_clock::rep>,
+                std::chrono::steady_clock::duration::period>>>(time_point);
     }
 };
 
@@ -683,6 +730,9 @@ int main()
 
     s.pair = { 8, "eight" };
     s.tuple = { 7, 7.00000001, 7.5f };
+
+    s.duration = std::chrono::duration<double>(37);
+    s.time_point = std::chrono::steady_clock::now();
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);
