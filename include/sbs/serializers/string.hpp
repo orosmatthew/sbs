@@ -14,7 +14,7 @@ template <
     class Allocator = std::allocator<CharType>>
     requires(sbs::Serializer<CharTypeSerializer, CharType> && std::is_default_constructible_v<CharType>)
 struct BasicStringSerializer {
-    void operator()(std::basic_string<CharType, Traits, Allocator>& string, Archive& ar) const
+    void operator()(Archive& ar, std::basic_string<CharType, Traits, Allocator>& string) const
     {
         if (ar.serializing()) {
             const uint64_t size = string.size();
@@ -42,9 +42,9 @@ template <
     class Traits = std::char_traits<CharType>,
     class Allocator = std::allocator<CharType>>
     requires(sbs::Serializer<CharTypeSerializer, CharType>)
-void serialize(std::basic_string<CharType, Traits, Allocator>& basic_string, Archive& ar)
+void serialize(Archive& ar, std::basic_string<CharType, Traits, Allocator>& basic_string)
 {
-    BasicStringSerializer<CharType, CharTypeSerializer, Traits, Allocator>()(basic_string, ar);
+    BasicStringSerializer<CharType, CharTypeSerializer, Traits, Allocator>()(ar, basic_string);
 }
 
 }

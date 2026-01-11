@@ -9,7 +9,7 @@ namespace sbs {
 
 template <std::size_t size>
 struct BitsetSerializer {
-    void operator()(std::bitset<size>& bitset, Archive& ar) const
+    void operator()(Archive& ar, std::bitset<size>& bitset) const
     {
         if (ar.serializing()) {
             uint8_t buffer = 0;
@@ -38,9 +38,9 @@ struct BitsetSerializer {
 };
 
 template <std::size_t size>
-void serialize(std::bitset<size>& bitset, Archive& ar)
+void serialize(Archive& ar, std::bitset<size>& bitset)
 {
-    BitsetSerializer<size>()(bitset, ar);
+    BitsetSerializer<size>()(ar, bitset);
 }
 
 }

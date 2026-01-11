@@ -15,7 +15,7 @@ template <
     class Allocator = std::allocator<Key>>
     requires(sbs::Serializer<KeySerializer, Key> && std::copyable<Key> && std::is_default_constructible_v<Key>)
 struct UnorderedSetSerializer {
-    void operator()(std::unordered_set<Key, Hash, KeyEqual, Allocator>& unordered_set, Archive& ar) const
+    void operator()(Archive& ar, std::unordered_set<Key, Hash, KeyEqual, Allocator>& unordered_set) const
     {
         if (ar.serializing()) {
             const uint64_t size = unordered_set.size();
@@ -45,7 +45,7 @@ template <
     class Allocator = std::allocator<Key>>
     requires(sbs::Serializer<KeySerializer, Key> && std::copyable<Key> && std::is_default_constructible_v<Key>)
 struct UnorderedMultisetSerializer {
-    void operator()(std::unordered_multiset<Key, Hash, KeyEqual, Allocator>& unordered_multiset, Archive& ar) const
+    void operator()(Archive& ar, std::unordered_multiset<Key, Hash, KeyEqual, Allocator>& unordered_multiset) const
     {
         if (ar.serializing()) {
             const uint64_t size = unordered_multiset.size();
@@ -74,9 +74,9 @@ template <
     class KeyEqual = std::equal_to<Key>,
     class Allocator = std::allocator<Key>>
     requires(sbs::Serializer<KeySerializer, Key>)
-void serialize(std::unordered_set<Key, Hash, KeyEqual, Allocator>& unordered_set, Archive& ar)
+void serialize(Archive& ar, std::unordered_set<Key, Hash, KeyEqual, Allocator>& unordered_set)
 {
-    UnorderedSetSerializer<Key, KeySerializer, Hash, KeyEqual, Allocator>()(unordered_set, ar);
+    UnorderedSetSerializer<Key, KeySerializer, Hash, KeyEqual, Allocator>()(ar, unordered_set);
 }
 
 template <
@@ -86,9 +86,9 @@ template <
     class KeyEqual = std::equal_to<Key>,
     class Allocator = std::allocator<Key>>
     requires(sbs::Serializer<KeySerializer, Key>)
-void serialize(std::unordered_multiset<Key, Hash, KeyEqual, Allocator>& unordered_multiset, Archive& ar)
+void serialize(Archive& ar, std::unordered_multiset<Key, Hash, KeyEqual, Allocator>& unordered_multiset)
 {
-    UnorderedMultisetSerializer<Key, KeySerializer, Hash, KeyEqual, Allocator>()(unordered_multiset, ar);
+    UnorderedMultisetSerializer<Key, KeySerializer, Hash, KeyEqual, Allocator>()(ar, unordered_multiset);
 }
 
 }

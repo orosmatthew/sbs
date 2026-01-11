@@ -27,7 +27,7 @@ template <class Type>
 concept MethodSerializable = requires(Type type, Archive& archive) { type.serialize(archive); };
 
 template <class Type>
-concept FunctionSerializable = requires(Type type, Archive& archive) { serialize(type, archive); };
+concept FunctionSerializable = requires(Type type, Archive& archive) { serialize(archive, type); };
 
 template <class Type>
 concept ObjectSerializable = MethodSerializable<Type> || FunctionSerializable<Type>;
@@ -36,8 +36,8 @@ template <class Type>
 concept DefaultSerializable = ValueSerializable<Type> || ObjectSerializable<Type>;
 
 template <class SerializeType, class Type>
-concept Serializer = requires(SerializeType serialize, Type& value, Archive& archive) {
-    { serialize.operator()(value, archive) } -> std::same_as<void>;
+concept Serializer = requires(SerializeType serialize, Archive& archive, Type& value) {
+    { serialize.operator()(archive, value) } -> std::same_as<void>;
 } && std::is_default_constructible_v<SerializeType>;
 
 using WriteCallback = std::function<void(std::span<const std::byte>)>;
@@ -78,14 +78,14 @@ public:
         requires(DefaultSerializable<Type>)
     void archive(Type& value)
     {
-        DefaultSerializer<Type> { }(value, *this);
+        DefaultSerializer<Type>()(*this, value);
     }
 
     template <class SerializeType, class Type>
         requires(Serializer<SerializeType, Type>)
     void archive(Type& value)
     {
-        SerializeType { }(value, *this);
+        SerializeType()(*this, value);
     }
 
     template <class Type>
@@ -93,7 +93,7 @@ public:
     void archive_copy(const Type& value)
     {
         Type copy = value;
-        DefaultSerializer<Type> { }(copy, *this);
+        DefaultSerializer<Type>()(*this, copy);
     }
 
     template <class SerializeType, class Type>
@@ -101,7 +101,7 @@ public:
     void archive_copy(const Type& value)
     {
         Type copy = value;
-        std::invoke(SerializeType { }, copy, *this);
+        SerializeType()(*this, copy);
     }
 
     [[nodiscard]] Mode mode() const
@@ -140,14 +140,14 @@ private:
 template <class Type>
     requires(DefaultSerializable<Type>)
 struct DefaultSerializer {
-    void operator()(Type& value, Archive& archive) const
+    void operator()(Archive& archive, Type& value) const
     {
         if constexpr (ValueSerializable<Type>) {
             archive.archive_value(value);
         } else if constexpr (MethodSerializable<Type>) {
             value.serialize(archive);
         } else if constexpr (FunctionSerializable<Type>) {
-            serialize(value, archive);
+            serialize(archive, value);
         }
     }
 };

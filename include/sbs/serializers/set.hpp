@@ -14,7 +14,7 @@ template <
     class Allocator = std::allocator<Key>>
     requires(sbs::Serializer<KeySerializer, Key> && std::copyable<Key> && std::is_default_constructible_v<Key>)
 struct SetSerializer {
-    void operator()(std::set<Key, Compare, Allocator>& set, Archive& ar) const
+    void operator()(Archive& ar, std::set<Key, Compare, Allocator>& set) const
     {
         if (ar.serializing()) {
             const uint64_t size = set.size();
@@ -42,7 +42,7 @@ template <
     class Allocator = std::allocator<Key>>
     requires(sbs::Serializer<KeySerializer, Key> && std::copyable<Key> && std::is_default_constructible_v<Key>)
 struct MultisetSerializer {
-    void operator()(std::multiset<Key, Compare, Allocator>& multiset, Archive& ar) const
+    void operator()(Archive& ar, std::multiset<Key, Compare, Allocator>& multiset) const
     {
         if (ar.serializing()) {
             const uint64_t size = multiset.size();
@@ -69,9 +69,9 @@ template <
     class Compare = std::less<Key>,
     class Allocator = std::allocator<Key>>
     requires(sbs::Serializer<KeySerializer, Key> && std::copyable<Key> && std::is_default_constructible_v<Key>)
-void serialize(std::set<Key, Compare, Allocator>& set, Archive& ar)
+void serialize(Archive& ar, std::set<Key, Compare, Allocator>& set)
 {
-    SetSerializer<Key, KeySerializer, Compare, Allocator>()(set, ar);
+    SetSerializer<Key, KeySerializer, Compare, Allocator>()(ar, set);
 }
 
 template <
@@ -80,9 +80,9 @@ template <
     class Compare = std::less<Key>,
     class Allocator = std::allocator<Key>>
     requires(sbs::Serializer<KeySerializer, Key> && std::copyable<Key> && std::is_default_constructible_v<Key>)
-void serialize(std::multiset<Key, Compare, Allocator>& multiset, Archive& ar)
+void serialize(Archive& ar, std::multiset<Key, Compare, Allocator>& multiset)
 {
-    MultisetSerializer<Key, KeySerializer, Compare, Allocator>()(multiset, ar);
+    MultisetSerializer<Key, KeySerializer, Compare, Allocator>()(ar, multiset);
 }
 
 }

@@ -9,7 +9,7 @@ namespace sbs {
 template <class Type, class TypeSerializer = DefaultSerializer<Type>>
     requires(sbs::Serializer<TypeSerializer, Type> && std::copyable<Type> && std::is_default_constructible_v<Type>)
 struct ComplexSerializer {
-    void operator()(std::complex<Type>& complex, Archive& ar) const
+    void operator()(Archive& ar, std::complex<Type>& complex) const
     {
         if (ar.serializing()) {
             ar.archive_copy<TypeSerializer>(complex.real());
@@ -27,9 +27,9 @@ struct ComplexSerializer {
 
 template <class Type, class TypeSerializer = DefaultSerializer<Type>>
     requires(sbs::Serializer<TypeSerializer, Type>)
-void serialize(std::complex<Type>& complex, Archive& ar)
+void serialize(Archive& ar, std::complex<Type>& complex)
 {
-    ComplexSerializer<Type>()(complex, ar);
+    ComplexSerializer<Type>()(ar, complex);
 }
 
 }

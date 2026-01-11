@@ -9,7 +9,7 @@ namespace sbs {
 template <class Tick, class TickSerializer = DefaultSerializer<Tick>, class Period = std::ratio<1>>
     requires(sbs::Serializer<TickSerializer, Tick> && std::copyable<Tick> && std::is_default_constructible_v<Tick>)
 struct ChronoDurationSerializer {
-    void operator()(std::chrono::duration<Tick, Period>& duration, Archive& ar) const
+    void operator()(Archive& ar, std::chrono::duration<Tick, Period>& duration) const
     {
         if (ar.serializing()) {
             const Tick ticks = duration.count();
@@ -27,7 +27,7 @@ template <class Clock, class Duration = Clock::duration, class DurationSerialize
         sbs::Serializer<DurationSerializer, Duration> && std::copyable<Duration>
         && std::is_default_constructible_v<Duration>)
 struct ChronoTimePointSerializer {
-    void operator()(std::chrono::time_point<Clock, Duration>& time_point, Archive& ar) const
+    void operator()(Archive& ar, std::chrono::time_point<Clock, Duration>& time_point) const
     {
         if (ar.serializing()) {
             const Duration ticks = time_point.time_since_epoch();
@@ -42,16 +42,16 @@ struct ChronoTimePointSerializer {
 
 template <class Tick, class TickSerializer = DefaultSerializer<Tick>, class Period = std::ratio<1>>
     requires(sbs::Serializer<TickSerializer, Tick>)
-void serialize(std::chrono::duration<Tick, Period>& duration, Archive& ar)
+void serialize(Archive& ar, std::chrono::duration<Tick, Period>& duration)
 {
-    ChronoDurationSerializer<Tick, TickSerializer, Period>()(duration, ar);
+    ChronoDurationSerializer<Tick, TickSerializer, Period>()(ar, duration);
 }
 
 template <class Clock, class Duration = Clock::duration, class DurationSerializer = DefaultSerializer<Duration>>
     requires(sbs::Serializer<DurationSerializer, Duration>)
-void serialize(std::chrono::time_point<Clock, Duration>& time_point, Archive& ar)
+void serialize(Archive& ar, std::chrono::time_point<Clock, Duration>& time_point)
 {
-    ChronoTimePointSerializer<Clock, Duration, DurationSerializer>()(time_point, ar);
+    ChronoTimePointSerializer<Clock, Duration, DurationSerializer>()(ar, time_point);
 }
 
 }

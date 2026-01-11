@@ -28,7 +28,7 @@ void construct_variant_at_index(Variant& variant, const uint64_t index)
 template <class... Types>
     requires((sbs::DefaultSerializable<Types> && std::is_default_constructible_v<Types>) && ...)
 struct VariantDefaultSerializer {
-    void operator()(std::variant<Types...>& variant, Archive& ar) const
+    void operator()(Archive& ar, std::variant<Types...>& variant) const
     {
         if (ar.serializing()) {
             const uint64_t index = variant.index();
@@ -45,9 +45,9 @@ struct VariantDefaultSerializer {
 
 template <class... Types>
     requires(sbs::DefaultSerializable<Types> && ...)
-void serialize(std::variant<Types...>& variant, Archive& ar)
+void serialize(Archive& ar, std::variant<Types...>& variant)
 {
-    VariantDefaultSerializer<Types...>()(variant, ar);
+    VariantDefaultSerializer<Types...>()(ar, variant);
 }
 
 }

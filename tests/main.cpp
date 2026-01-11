@@ -26,7 +26,7 @@ struct OtherStruct {
     uint64_t thing;
 };
 
-void serialize(OtherStruct& o, sbs::Archive& ar)
+void serialize(sbs::Archive& ar, OtherStruct& o)
 {
     ar.archive(o.thing);
 }

@@ -19,7 +19,7 @@ template <
         sbs::Serializer<KeySerializer, Key> && sbs::Serializer<ValueSerializer, Value> && std::copyable<Key>
         && std::is_default_constructible_v<Key> && std::is_default_constructible_v<Value>)
 struct UnorderedMapSerializer {
-    void operator()(std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& unordered_map, Archive& ar) const
+    void operator()(Archive& ar, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& unordered_map) const
     {
         if (ar.serializing()) {
             const uint64_t size = unordered_map.size();
@@ -57,7 +57,7 @@ template <
         && std::is_default_constructible_v<Key> && std::is_default_constructible_v<Value>)
 struct UnorderedMultimapSerializer {
     void operator()(
-        std::unordered_multimap<Key, Value, Hash, KeyEqual, Allocator>& unordered_multimap, Archive& ar) const
+        Archive& ar, std::unordered_multimap<Key, Value, Hash, KeyEqual, Allocator>& unordered_multimap) const
     {
         if (ar.serializing()) {
             const uint64_t size = unordered_multimap.size();
@@ -91,9 +91,9 @@ template <
     class KeyEqual = std::equal_to<Key>,
     class Allocator = std::allocator<std::pair<const Key, Value>>>
     requires(sbs::Serializer<KeySerializer, Key> && sbs::Serializer<ValueSerializer, Value>)
-void serialize(std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& unordered_map, Archive& ar)
+void serialize(Archive& ar, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& unordered_map)
 {
-    UnorderedMapSerializer<Key, Value, KeySerializer, ValueSerializer, Hash, KeyEqual, Allocator>()(unordered_map, ar);
+    UnorderedMapSerializer<Key, Value, KeySerializer, ValueSerializer, Hash, KeyEqual, Allocator>()(ar, unordered_map);
 }
 
 template <
@@ -105,10 +105,10 @@ template <
     class KeyEqual = std::equal_to<Key>,
     class Allocator = std::allocator<std::pair<const Key, Value>>>
     requires(sbs::Serializer<KeySerializer, Key> && sbs::Serializer<ValueSerializer, Value>)
-void serialize(std::unordered_multimap<Key, Value, Hash, KeyEqual, Allocator>& unordered_multimap, Archive& ar)
+void serialize(Archive& ar, std::unordered_multimap<Key, Value, Hash, KeyEqual, Allocator>& unordered_multimap)
 {
     UnorderedMultimapSerializer<Key, Value, KeySerializer, ValueSerializer, Hash, KeyEqual, Allocator>()(
-        unordered_multimap, ar);
+        ar, unordered_multimap);
 }
 
 }

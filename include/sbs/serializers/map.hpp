@@ -18,7 +18,7 @@ template <
         sbs::Serializer<KeySerializer, Key> && sbs::Serializer<ValueSerializer, Value> && std::copyable<Key>
         && std::is_default_constructible_v<Key> && std::is_default_constructible_v<Value>)
 struct MapSerializer {
-    void operator()(std::map<Key, Value, Compare, Allocator>& map, Archive& ar) const
+    void operator()(Archive& ar, std::map<Key, Value, Compare, Allocator>& map) const
     {
         if (ar.serializing()) {
             const uint64_t size = map.size();
@@ -53,7 +53,7 @@ template <
         sbs::Serializer<KeySerializer, Key> && sbs::Serializer<ValueSerializer, Value> && std::copyable<Key>
         && std::is_default_constructible_v<Key> && std::is_default_constructible_v<Value>)
 struct MultimapSerializer {
-    void operator()(std::multimap<Key, Value, Compare, Allocator>& multimap, Archive& ar) const
+    void operator()(Archive& ar, std::multimap<Key, Value, Compare, Allocator>& multimap) const
     {
         if (ar.serializing()) {
             const uint64_t size = multimap.size();
@@ -85,9 +85,9 @@ template <
     class Compare = std::less<Key>,
     class Allocator = std::allocator<std::pair<const Key, Value>>>
     requires(sbs::Serializer<KeySerializer, Key> && sbs::Serializer<ValueSerializer, Value>)
-void serialize(std::map<Key, Value, Compare, Allocator>& map, Archive& ar)
+void serialize(Archive& ar, std::map<Key, Value, Compare, Allocator>& map)
 {
-    MapSerializer<Key, Value, KeySerializer, ValueSerializer, Compare, Allocator>()(map, ar);
+    MapSerializer<Key, Value, KeySerializer, ValueSerializer, Compare, Allocator>()(ar, map);
 }
 
 template <
@@ -98,9 +98,9 @@ template <
     class Compare = std::less<Key>,
     class Allocator = std::allocator<std::pair<const Key, Value>>>
     requires(sbs::Serializer<KeySerializer, Key> && sbs::Serializer<ValueSerializer, Value>)
-void serialize(std::multimap<Key, Value, Compare, Allocator>& multimap, Archive& ar)
+void serialize(Archive& ar, std::multimap<Key, Value, Compare, Allocator>& multimap)
 {
-    MultimapSerializer<Key, Value, KeySerializer, ValueSerializer, Compare, Allocator>()(multimap, ar);
+    MultimapSerializer<Key, Value, KeySerializer, ValueSerializer, Compare, Allocator>()(ar, multimap);
 }
 
 }

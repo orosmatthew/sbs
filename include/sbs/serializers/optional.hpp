@@ -9,7 +9,7 @@ namespace sbs {
 template <class Type, class TypeSerializer = DefaultSerializer<Type>>
     requires(sbs::Serializer<TypeSerializer, Type> && std::is_default_constructible_v<Type>)
 struct OptionalSerializer {
-    void operator()(std::optional<Type>& optional, Archive& ar) const
+    void operator()(Archive& ar, std::optional<Type>& optional) const
     {
         if (ar.serializing()) {
             const bool has_value = optional.has_value();
@@ -32,9 +32,9 @@ struct OptionalSerializer {
 
 template <class Type, class TypeSerializer = DefaultSerializer<Type>>
     requires(sbs::Serializer<TypeSerializer, Type>)
-void serialize(std::optional<Type>& optional, Archive& ar)
+void serialize(Archive& ar, std::optional<Type>& optional)
 {
-    OptionalSerializer<Type, TypeSerializer>()(optional, ar);
+    OptionalSerializer<Type, TypeSerializer>()(ar, optional);
 }
 
 }

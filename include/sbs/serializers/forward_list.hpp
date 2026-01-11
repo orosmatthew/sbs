@@ -10,7 +10,7 @@ namespace sbs {
 template <class Type, class TypeSerializer = DefaultSerializer<Type>, class Allocator = std::allocator<Type>>
     requires(sbs::Serializer<TypeSerializer, Type> && std::is_default_constructible_v<Type>)
 struct ForwardListSerializer {
-    void operator()(std::forward_list<Type, Allocator>& forward_list, Archive& ar) const
+    void operator()(Archive& ar, std::forward_list<Type, Allocator>& forward_list) const
     {
         if (ar.serializing()) {
             const uint64_t size = std::distance(forward_list.begin(), forward_list.end());
@@ -32,9 +32,9 @@ struct ForwardListSerializer {
 
 template <class Type, class TypeSerializer = DefaultSerializer<Type>, class Allocator = std::allocator<Type>>
     requires(sbs::Serializer<TypeSerializer, Type>)
-void serialize(std::forward_list<Type, Allocator>& forward_list, Archive& ar)
+void serialize(Archive& ar, std::forward_list<Type, Allocator>& forward_list)
 {
-    ForwardListSerializer<Type, TypeSerializer, Allocator>()(forward_list, ar);
+    ForwardListSerializer<Type, TypeSerializer, Allocator>()(ar, forward_list);
 }
 
 }

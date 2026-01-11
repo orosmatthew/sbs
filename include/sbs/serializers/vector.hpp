@@ -10,7 +10,7 @@ namespace sbs {
 template <class Type, class TypeSerializer = DefaultSerializer<Type>, class Allocator = std::allocator<Type>>
     requires(sbs::Serializer<TypeSerializer, Type> && std::is_default_constructible_v<Type>)
 struct VectorSerializer {
-    void operator()(std::vector<Type, Allocator>& vector, Archive& ar) const
+    void operator()(Archive& ar, std::vector<Type, Allocator>& vector) const
     {
         if (ar.serializing()) {
             const uint64_t size = vector.size();
@@ -32,9 +32,9 @@ struct VectorSerializer {
 
 template <class Type, class TypeSerializer = DefaultSerializer<Type>, class Allocator = std::allocator<Type>>
     requires(sbs::Serializer<TypeSerializer, Type>)
-void serialize(std::vector<Type, Allocator>& vector, Archive& ar)
+void serialize(Archive& ar, std::vector<Type, Allocator>& vector)
 {
-    VectorSerializer<Type, TypeSerializer, Allocator>()(vector, ar);
+    VectorSerializer<Type, TypeSerializer, Allocator>()(ar, vector);
 }
 
 }
