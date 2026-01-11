@@ -18,6 +18,7 @@
 #include <sbs/serializers/utility.hpp>
 #include <sbs/serializers/variant.hpp>
 #include <sbs/serializers/vector.hpp>
+#include <sbs/serializers/filesystem.hpp>
 
 #include "test.hpp"
 
@@ -64,6 +65,7 @@ struct SimpleStruct {
     std::bitset<200> bitset;
     std::unique_ptr<int64_t> unique_ptr;
     std::unique_ptr<int64_t> unique_ptr_null;
+    std::filesystem::path filesystem_path;
 
     void serialize(sbs::Archive& ar)
     {
@@ -98,6 +100,7 @@ struct SimpleStruct {
         ar.archive(bitset);
         ar.archive(unique_ptr);
         ar.archive(unique_ptr_null);
+        ar.archive(filesystem_path);
     }
 };
 
@@ -223,6 +226,8 @@ int main()
 
     s.unique_ptr = std::make_unique<int64_t>(1337);
     s.unique_ptr_null = nullptr;
+
+    s.filesystem_path = "C:\\Windows\\System32";
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);
