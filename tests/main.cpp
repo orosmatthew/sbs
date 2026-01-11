@@ -63,6 +63,7 @@ struct SimpleStruct {
     std::complex<float> complex;
     std::bitset<200> bitset;
     std::unique_ptr<int64_t> unique_ptr;
+    std::unique_ptr<int64_t> unique_ptr_null;
 
     void serialize(sbs::Archive& ar)
     {
@@ -96,6 +97,7 @@ struct SimpleStruct {
         ar.archive(complex);
         ar.archive(bitset);
         ar.archive(unique_ptr);
+        ar.archive(unique_ptr_null);
     }
 };
 
@@ -220,6 +222,7 @@ int main()
     s.bitset.set(198, true);
 
     s.unique_ptr = std::make_unique<int64_t>(1337);
+    s.unique_ptr_null = nullptr;
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);
