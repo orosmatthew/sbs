@@ -9,6 +9,7 @@
 #include <sbs/serializers/forward_list.hpp>
 #include <sbs/serializers/list.hpp>
 #include <sbs/serializers/map.hpp>
+#include <sbs/serializers/memory.hpp>
 #include <sbs/serializers/optional.hpp>
 #include <sbs/serializers/set.hpp>
 #include <sbs/serializers/string.hpp>
@@ -61,6 +62,7 @@ struct SimpleStruct {
     std::chrono::time_point<std::chrono::steady_clock> time_point;
     std::complex<float> complex;
     std::bitset<200> bitset;
+    std::unique_ptr<int64_t> unique_ptr;
 
     void serialize(sbs::Archive& ar)
     {
@@ -93,6 +95,7 @@ struct SimpleStruct {
         ar.archive(time_point);
         ar.archive(complex);
         ar.archive(bitset);
+        ar.archive(unique_ptr);
     }
 };
 
@@ -215,6 +218,8 @@ int main()
     s.bitset.set(100, true);
     s.bitset.set(150, true);
     s.bitset.set(198, true);
+
+    s.unique_ptr = std::make_unique<int64_t>(1337);
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);
