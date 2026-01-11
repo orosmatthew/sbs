@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <functional>
 #include <span>
+#include <vector>
 
 namespace sbs {
 
@@ -191,5 +192,4 @@ void deserialize_from_span(Type& value, std::span<const std::byte> bytes)
     auto archive = Archive::create_deserialize(&callback);
     archive.archive(value);
 }
-
 }
