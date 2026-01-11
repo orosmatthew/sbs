@@ -24,7 +24,7 @@ struct OptionalSerializer {
             if (has_value) {
                 auto value = Type();
                 ar.archive<TypeSerializer>(value);
-                optional = value;
+                optional = std::move(value);
             }
         }
     }

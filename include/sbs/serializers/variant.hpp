@@ -17,7 +17,7 @@ void construct_variant_at_index(Variant& variant, const uint64_t index)
         using Type = std::variant_alternative_t<Index, Variant>;
         static_assert(std::is_default_constructible_v<Type>);
         auto value = Type();
-        variant = value;
+        variant = std::move(value);
     } else {
         return construct_variant_at_index<Variant, Index + 1>(variant, index);
     }

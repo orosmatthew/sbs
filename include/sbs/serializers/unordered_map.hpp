@@ -19,7 +19,7 @@ template <
         sbs::Serializer<KeySerializer, Key> && sbs::Serializer<ValueSerializer, Value> && std::copyable<Key>
         && std::is_default_constructible_v<Key> && std::is_default_constructible_v<Value>)
 struct UnorderedMapSerializer {
-    void operator()(std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& unordered_map, Archive& ar)
+    void operator()(std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& unordered_map, Archive& ar) const
     {
         if (ar.serializing()) {
             const uint64_t size = unordered_map.size();
