@@ -21,7 +21,7 @@ struct UniquePtrSerializer {
             bool has_value = false;
             ar.archive(has_value);
             if (has_value) {
-                auto value = std::make_unique<Type, Deleter>();
+                auto value = std::unique_ptr<Type, Deleter>(new Type());
                 ar.archive(*value);
                 unique_ptr = std::move(value);
             } else {
