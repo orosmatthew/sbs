@@ -110,9 +110,9 @@ struct SimpleStruct {
     }
 };
 
-void serialize_integral_types()
+void serialize_ints()
 {
-    test_case("serialize integral types");
+    test_case("serialize ints");
 
     struct Struct {
         uint8_t uint8;
@@ -158,9 +158,9 @@ void serialize_integral_types()
     ASSERT(s_in == s_out);
 }
 
-void serialize_floating_point_types()
+void serialize_floats()
 {
-    test_case("serialize floating point types");
+    test_case("serialize floats");
 
     struct Struct {
         float f;
@@ -235,8 +235,8 @@ void serialize_enum()
 
 int main()
 {
-    serialize_integral_types();
-    serialize_floating_point_types();
+    serialize_ints();
+    serialize_floats();
     serialize_enum();
 
     SimpleStruct s {
