@@ -10,6 +10,7 @@ std::optional<std::string> g_test_section = std::nullopt;
 void test_case(const std::string& name)
 {
     g_test_case = name;
+    g_test_section = std::nullopt;
 }
 
 void test_section(const std::string& name)

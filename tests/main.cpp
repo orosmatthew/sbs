@@ -199,10 +199,45 @@ void serialize_floating_point_types()
     }
 }
 
+void serialize_enum()
+{
+    test_case("serialize enum");
+
+    enum class MyEnum : uint16_t { first, second, third, big = 60000 };
+
+    struct Struct {
+        MyEnum e1;
+        MyEnum e2;
+        MyEnum e3;
+        MyEnum e4;
+
+        void serialize(sbs::Archive& ar)
+        {
+            ar.archive(e1);
+            ar.archive(e2);
+            ar.archive(e3);
+            ar.archive(e4);
+        }
+
+        bool operator==(const Struct& other) const
+        {
+            return e1 == other.e1 && e2 == other.e2 && e3 == other.e3 && e4 == other.e4;
+        }
+    };
+
+    Struct s_in { .e1 = MyEnum::first, .e2 = MyEnum::second, .e3 = MyEnum::third, .e4 = MyEnum::big };
+    std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+    ASSERT(bytes.size() == 8);
+    Struct s_out { };
+    sbs::deserialize_from_span(s_out, bytes);
+    ASSERT(s_in == s_out);
+}
+
 int main()
 {
     serialize_integral_types();
     serialize_floating_point_types();
+    serialize_enum();
 
     SimpleStruct s {
         .a = 1,
