@@ -249,12 +249,68 @@ void serialize(sbs::Archive& ar, FunctionSerializableStruct& s)
     ar.archive(s.f);
 }
 
-void function_serializable()
+void serialize_function_serializable()
 {
+    test_case("serialize function serializable struct");
+
     FunctionSerializableStruct s_in { .i = 23, .f = -50000.0f };
     std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
     ASSERT(bytes.size() == 5);
     FunctionSerializableStruct s_out { };
+    sbs::deserialize_from_span(s_out, bytes);
+    ASSERT(s_in == s_out);
+}
+
+void serialize_nested_structs()
+{
+    test_case("serialize nested structs");
+
+    struct StructInner {
+        uint64_t i1;
+        int32_t i2;
+
+        void serialize(sbs::Archive& ar)
+        {
+            ar.archive(i1);
+            ar.archive(i2);
+        }
+
+        bool operator==(const StructInner& other) const
+        {
+            return i1 == other.i1 && i2 == other.i2;
+        }
+    };
+
+    struct StructOuter {
+        uint16_t i1;
+        double d;
+        StructInner inner;
+        int64_t i2;
+        float f;
+
+        void serialize(sbs::Archive& ar)
+        {
+            ar.archive(i1);
+            ar.archive(d);
+            ar.archive(inner);
+            ar.archive(i2);
+            ar.archive(f);
+        }
+
+        bool operator==(const StructOuter& other) const
+        {
+            return i1 == other.i1 && d == other.d && inner == other.inner && i2 == other.i2 && f == other.f;
+        }
+    };
+
+    StructOuter s_in { .i1 = 1234,
+                       .d = -70273.0,
+                       .inner = { .i1 = 3828362829372893ULL, .i2 = -23 },
+                       .i2 = -3828362829372893LL,
+                       .f = 93.0f };
+    std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+    ASSERT(bytes.size() == 34);
+    StructOuter s_out { };
     sbs::deserialize_from_span(s_out, bytes);
     ASSERT(s_in == s_out);
 }
@@ -264,7 +320,8 @@ int main()
     serialize_ints();
     serialize_floats();
     serialize_enum();
-    function_serializable();
+    serialize_function_serializable();
+    serialize_nested_structs();
 
     SimpleStruct s {
         .a = 1,
