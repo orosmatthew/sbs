@@ -233,11 +233,38 @@ void serialize_enum()
     ASSERT(s_in == s_out);
 }
 
+struct FunctionSerializableStruct {
+    uint8_t i;
+    float f;
+
+    bool operator==(const FunctionSerializableStruct& other) const
+    {
+        return i == other.i && f == other.f;
+    }
+};
+
+void serialize(sbs::Archive& ar, FunctionSerializableStruct& s)
+{
+    ar.archive(s.i);
+    ar.archive(s.f);
+}
+
+void function_serializable()
+{
+    FunctionSerializableStruct s_in { .i = 23, .f = -50000.0f };
+    std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+    ASSERT(bytes.size() == 5);
+    FunctionSerializableStruct s_out { };
+    sbs::deserialize_from_span(s_out, bytes);
+    ASSERT(s_in == s_out);
+}
+
 int main()
 {
     serialize_ints();
     serialize_floats();
     serialize_enum();
+    function_serializable();
 
     SimpleStruct s {
         .a = 1,
