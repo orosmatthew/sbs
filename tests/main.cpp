@@ -110,93 +110,99 @@ struct SimpleStruct {
     }
 };
 
-int main()
+void serialize_integral_types()
 {
     test_case("serialize integral types");
+
+    struct Struct {
+        uint8_t uint8;
+        uint16_t uint16;
+        uint32_t uint32;
+        uint64_t uint64;
+        int8_t int8;
+        int16_t int16;
+        int32_t int32;
+        int64_t int64;
+
+        void serialize(sbs::Archive& ar)
+        {
+            ar.archive(uint8);
+            ar.archive(uint16);
+            ar.archive(uint32);
+            ar.archive(uint64);
+            ar.archive(int8);
+            ar.archive(int16);
+            ar.archive(int32);
+            ar.archive(int64);
+        }
+
+        bool operator==(const Struct& other) const
+        {
+            return uint8 == other.uint8 && uint16 == other.uint16 && uint32 == other.uint32 && uint64 == other.uint64
+                && int8 == other.int8 && int16 == other.int16 && int32 == other.int32 && int64 == other.int64;
+        }
+    };
+
+    Struct s_in { .uint8 = 2,
+                  .uint16 = 60000,
+                  .uint32 = 4000000000,
+                  .uint64 = 100000000000000ULL,
+                  .int8 = -2,
+                  .int16 = -30000,
+                  .int32 = -1000000000,
+                  .int64 = -100000000000000LL };
+    std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+    ASSERT(bytes.size() == 30);
+    Struct s_out { };
+    sbs::deserialize_from_span(s_out, bytes);
+    ASSERT(s_in == s_out);
+}
+
+void serialize_floating_point_types()
+{
+    test_case("serialize floating point types");
+
+    struct Struct {
+        float f;
+        double d;
+
+        void serialize(sbs::Archive& ar)
+        {
+            ar.archive(f);
+            ar.archive(d);
+        }
+
+        bool operator==(const Struct& other) const
+        {
+            return f == other.f && d == other.d;
+        }
+    };
+
+    test_section("positives");
     {
-        struct Struct {
-            uint8_t uint8;
-            uint16_t uint16;
-            uint32_t uint32;
-            uint64_t uint64;
-            int8_t int8;
-            int16_t int16;
-            int32_t int32;
-            int64_t int64;
-
-            void serialize(sbs::Archive& ar)
-            {
-                ar.archive(uint8);
-                ar.archive(uint16);
-                ar.archive(uint32);
-                ar.archive(uint64);
-                ar.archive(int8);
-                ar.archive(int16);
-                ar.archive(int32);
-                ar.archive(int64);
-            }
-
-            bool operator==(const Struct& other) const
-            {
-                return uint8 == other.uint8 && uint16 == other.uint16 && uint32 == other.uint32
-                    && uint64 == other.uint64 && int8 == other.int8 && int16 == other.int16 && int32 == other.int32
-                    && int64 == other.int64;
-            }
-        };
-
-        Struct s_in { .uint8 = 2,
-                      .uint16 = 60000,
-                      .uint32 = 4000000000,
-                      .uint64 = 100000000000000ULL,
-                      .int8 = -2,
-                      .int16 = -30000,
-                      .int32 = -1000000000,
-                      .int64 = -100000000000000LL };
+        Struct s_in { .f = 1.5f, .d = 2.3 };
         std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
-        ASSERT(bytes.size() == 30);
+        ASSERT(bytes.size() == 12);
         Struct s_out { };
         sbs::deserialize_from_span(s_out, bytes);
         ASSERT(s_in == s_out);
     }
 
-    test_case("serialize floating point types");
+    test_section("negatives");
     {
-        struct Struct {
-            float f;
-            double d;
-
-            void serialize(sbs::Archive& ar)
-            {
-                ar.archive(f);
-                ar.archive(d);
-            }
-
-            bool operator==(const Struct& other) const
-            {
-                return f == other.f && d == other.d;
-            }
-        };
-
-        test_section("positives");
-        {
-            Struct s_in { .f = 1.5f, .d = 2.3 };
-            std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
-            ASSERT(bytes.size() == 12);
-            Struct s_out { };
-            sbs::deserialize_from_span(s_out, bytes);
-            ASSERT(s_in == s_out);
-        }
-
-        test_section("negatives");
-        {
-            Struct s_in { .f = -2.3f, .d = -1.5 };
-            std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
-            ASSERT(bytes.size() == 12);
-            Struct s_out { };
-            sbs::deserialize_from_span(s_out, bytes);
-            ASSERT(s_in == s_out);
-        }
+        Struct s_in { .f = -2.3f, .d = -1.5 };
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+        ASSERT(bytes.size() == 12);
+        Struct s_out { };
+        sbs::deserialize_from_span(s_out, bytes);
+        ASSERT(s_in == s_out);
     }
+}
+
+int main()
+{
+    serialize_integral_types();
+    serialize_floating_point_types();
 
     SimpleStruct s {
         .a = 1,
