@@ -6,6 +6,7 @@
 #include <sbs/serializers/chrono.hpp>
 #include <sbs/serializers/complex.hpp>
 #include <sbs/serializers/deque.hpp>
+#include <sbs/serializers/filesystem.hpp>
 #include <sbs/serializers/forward_list.hpp>
 #include <sbs/serializers/list.hpp>
 #include <sbs/serializers/map.hpp>
@@ -18,11 +19,12 @@
 #include <sbs/serializers/utility.hpp>
 #include <sbs/serializers/variant.hpp>
 #include <sbs/serializers/vector.hpp>
-#include <sbs/serializers/filesystem.hpp>
 
 #include "test.hpp"
 
 enum class MyEnum : uint16_t { first, second, third };
+
+namespace inner {
 
 struct OtherStruct {
     uint64_t thing;
@@ -33,11 +35,13 @@ void serialize(sbs::Archive& ar, OtherStruct& o)
     ar.archive(o.thing);
 }
 
+}
+
 struct SimpleStruct {
     uint8_t a;
     uint16_t b;
     uint8_t c;
-    OtherStruct d;
+    inner::OtherStruct d;
     std::vector<uint16_t> numbers;
     std::vector<std::vector<uint8_t>> multi_nums;
     std::string str;

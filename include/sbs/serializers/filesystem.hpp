@@ -2,6 +2,8 @@
 
 #include <sbs/sbs.hpp>
 
+#include <sbs/serializers/string.hpp>
+
 #include <filesystem>
 
 namespace sbs {
