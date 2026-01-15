@@ -60,7 +60,8 @@ public:
         return Archive(read_callback);
     }
 
-    template <ValueSerializable Value>
+    template <class Value>
+        requires(ValueSerializable<Value>)
     void archive_value(Value& value)
     {
         if (m_mode == Mode::serialize) {
