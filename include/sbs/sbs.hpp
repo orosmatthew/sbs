@@ -48,17 +48,16 @@ enum class Mode { serialize, deserialize };
 template <class Type>
     requires(DefaultSerializable<Type>)
 struct DefaultSerializer;
-
 class Archive {
 public:
-    static Archive create_serialize(WriteCallback* write_callback)
+    static Archive create_serialize(WriteCallback write_callback)
     {
-        return Archive(write_callback);
+        return Archive(std::move(write_callback));
     }
 
-    static Archive create_deserialize(ReadCallback* read_callback)
+    static Archive create_deserialize(ReadCallback read_callback)
     {
-        return Archive(read_callback);
+        return Archive(std::move(read_callback));
     }
 
     template <ValueSerializable Value>
@@ -66,9 +65,9 @@ public:
     {
         if (m_mode == Mode::serialize) {
             std::span<const std::byte> bytes = std::as_bytes(std::span<const Value>(&value, 1));
-            std::invoke(*m_write_callback, bytes);
+            std::invoke(m_write_callback, bytes);
         } else {
-            std::span<const std::byte> source = std::invoke(*m_read_callback, sizeof(Value));
+            std::span<const std::byte> source = std::invoke(m_read_callback, sizeof(Value));
             std::span<std::byte> dest = std::as_writable_bytes(std::span<Value>(&value, 1));
             std::ranges::copy(source, dest.begin());
         }
@@ -121,18 +120,18 @@ public:
 
 private:
     Mode m_mode;
-    WriteCallback* m_write_callback { };
-    ReadCallback* m_read_callback { };
+    WriteCallback m_write_callback { };
+    ReadCallback m_read_callback { };
 
-    explicit Archive(std::function<void(std::span<const std::byte>)>* write_callback)
+    explicit Archive(WriteCallback write_callback)
         : m_mode { Mode::serialize }
-        , m_write_callback { write_callback }
+        , m_write_callback { std::move(write_callback) }
     {
     }
 
-    explicit Archive(std::function<std::span<const std::byte>(size_t)>* read_callback)
+    explicit Archive(ReadCallback read_callback)
         : m_mode { Mode::deserialize }
-        , m_read_callback { read_callback }
+        , m_read_callback { std::move(read_callback) }
     {
     }
 };
@@ -152,44 +151,43 @@ struct DefaultSerializer {
     }
 };
 
-template <class Type>
-    requires(DefaultSerializable<Type>)
+template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+    requires(Serializer<TypeSerializer, Type>)
 void serialize_using_callback(Type& value, WriteCallback write_callback)
 {
-    auto archive = Archive::create_serialize(&write_callback);
-    archive(value);
+    auto ar = Archive::create_serialize(std::move(write_callback));
+    ar.archive<TypeSerializer>(value);
 }
 
-template <class Type>
-    requires(DefaultSerializable<Type>)
-void deserialize_using_callback(Type& object, ReadCallback read_callback)
+template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+    requires(Serializer<TypeSerializer, Type>)
+void deserialize_using_callback(Type& value, ReadCallback read_callback)
 {
-    auto archive = Archive::create_deserialize(&read_callback);
-    object.serialize(archive);
+    auto ar = Archive::create_deserialize(std::move(read_callback));
+    ar.archive<TypeSerializer>(value);
 }
 
-template <class Type>
-    requires(DefaultSerializable<Type>)
+template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+    requires(Serializer<TypeSerializer, Type>)
 std::vector<std::byte> serialize_to_vector(Type& value)
 {
     std::vector<std::byte> result;
-    WriteCallback callback
-        = [&result](std::span<const std::byte> bytes) { result.insert(result.end(), bytes.begin(), bytes.end()); };
-    auto archive = Archive::create_serialize(&callback);
-    archive.archive(value);
+    auto ar = Archive::create_serialize([&result](std::span<const std::byte> bytes) {
+        result.insert(result.end(), bytes.begin(), bytes.end());
+    });
+    ar.template archive<TypeSerializer>(value);
     return result;
 }
 
-template <class Type>
-    requires(DefaultSerializable<Type>)
+template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+    requires(Serializer<TypeSerializer, Type>)
 void deserialize_from_span(Type& value, std::span<const std::byte> bytes)
 {
-    ReadCallback callback = [&bytes](const size_t size) {
+    auto ar = Archive::create_deserialize([&bytes](const size_t size) {
         std::span<const std::byte> subspan = bytes.subspan(0, size);
         bytes = bytes.subspan(size, bytes.size() - size);
         return subspan;
-    };
-    auto archive = Archive::create_deserialize(&callback);
-    archive.archive(value);
+    });
+    ar.template archive<TypeSerializer>(value);
 }
 }
