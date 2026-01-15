@@ -1,9 +1,11 @@
 #pragma once
 
 #include <algorithm>
+#include <bit>
 #include <climits>
 #include <cstddef>
 #include <functional>
+#include <ranges>
 #include <span>
 #include <vector>
 
@@ -48,16 +50,17 @@ enum class Mode { serialize, deserialize };
 template <class Type>
     requires(DefaultSerializable<Type>)
 struct DefaultSerializer;
+
 class Archive {
 public:
-    static Archive create_serialize(WriteCallback write_callback)
+    static Archive create_serialize(WriteCallback write_callback, const std::endian endian)
     {
-        return Archive(std::move(write_callback));
+        return Archive(std::move(write_callback), endian);
     }
 
-    static Archive create_deserialize(ReadCallback read_callback)
+    static Archive create_deserialize(ReadCallback read_callback, const std::endian endian)
     {
-        return Archive(std::move(read_callback));
+        return Archive(std::move(read_callback), endian);
     }
 
     template <ValueSerializable Value>
@@ -65,11 +68,21 @@ public:
     {
         if (m_mode == Mode::serialize) {
             std::span<const std::byte> bytes = std::as_bytes(std::span<const Value>(&value, 1));
-            std::invoke(m_write_callback, bytes);
+            if (m_endian == std::endian::native) {
+                m_write_callback(bytes);
+            } else {
+                std::array<std::byte, sizeof(Value)> reversed;
+                std::ranges::copy(bytes | std::views::reverse, reversed.begin());
+                m_write_callback(reversed);
+            }
         } else {
-            std::span<const std::byte> source = std::invoke(m_read_callback, sizeof(Value));
+            std::span<const std::byte> source = m_read_callback(sizeof(Value));
             std::span<std::byte> dest = std::as_writable_bytes(std::span<Value>(&value, 1));
-            std::ranges::copy(source, dest.begin());
+            if (m_endian == std::endian::native) {
+                std::ranges::copy(source, dest.begin());
+            } else {
+                std::ranges::copy(source | std::views::reverse, dest.begin());
+            }
         }
     }
 
@@ -120,17 +133,20 @@ public:
 
 private:
     Mode m_mode;
+    std::endian m_endian;
     WriteCallback m_write_callback { };
     ReadCallback m_read_callback { };
 
-    explicit Archive(WriteCallback write_callback)
+    explicit Archive(WriteCallback write_callback, const std::endian endian)
         : m_mode { Mode::serialize }
+        , m_endian { endian }
         , m_write_callback { std::move(write_callback) }
     {
     }
 
-    explicit Archive(ReadCallback read_callback)
+    explicit Archive(ReadCallback read_callback, const std::endian endian)
         : m_mode { Mode::deserialize }
+        , m_endian { endian }
         , m_read_callback { std::move(read_callback) }
     {
     }
@@ -153,41 +169,43 @@ struct DefaultSerializer {
 
 template <class Type, class TypeSerializer = DefaultSerializer<Type>>
     requires(Serializer<TypeSerializer, Type>)
-void serialize_using_callback(Type& value, WriteCallback write_callback)
+void serialize_using_callback(Type& value, WriteCallback write_callback, const std::endian endian = std::endian::little)
 {
-    auto ar = Archive::create_serialize(std::move(write_callback));
+    auto ar = Archive::create_serialize(std::move(write_callback), endian);
     ar.archive<TypeSerializer>(value);
 }
 
 template <class Type, class TypeSerializer = DefaultSerializer<Type>>
     requires(Serializer<TypeSerializer, Type>)
-void deserialize_using_callback(Type& value, ReadCallback read_callback)
+void deserialize_using_callback(Type& value, ReadCallback read_callback, const std::endian endian = std::endian::little)
 {
-    auto ar = Archive::create_deserialize(std::move(read_callback));
+    auto ar = Archive::create_deserialize(std::move(read_callback), endian);
     ar.archive<TypeSerializer>(value);
 }
 
 template <class Type, class TypeSerializer = DefaultSerializer<Type>>
     requires(Serializer<TypeSerializer, Type>)
-std::vector<std::byte> serialize_to_vector(Type& value)
+std::vector<std::byte> serialize_to_vector(Type& value, std::endian endian = std::endian::little)
 {
     std::vector<std::byte> result;
-    auto ar = Archive::create_serialize([&result](std::span<const std::byte> bytes) {
-        result.insert(result.end(), bytes.begin(), bytes.end());
-    });
+    auto ar = Archive::create_serialize(
+        [&result](std::span<const std::byte> bytes) { result.insert(result.end(), bytes.begin(), bytes.end()); },
+        endian);
     ar.template archive<TypeSerializer>(value);
     return result;
 }
 
 template <class Type, class TypeSerializer = DefaultSerializer<Type>>
     requires(Serializer<TypeSerializer, Type>)
-void deserialize_from_span(Type& value, std::span<const std::byte> bytes)
+void deserialize_from_span(Type& value, std::span<const std::byte> bytes, std::endian endian = std::endian::little)
 {
-    auto ar = Archive::create_deserialize([&bytes](const size_t size) {
-        std::span<const std::byte> subspan = bytes.subspan(0, size);
-        bytes = bytes.subspan(size, bytes.size() - size);
-        return subspan;
-    });
+    auto ar = Archive::create_deserialize(
+        [&bytes](const size_t size) {
+            std::span<const std::byte> subspan = bytes.subspan(0, size);
+            bytes = bytes.subspan(size, bytes.size() - size);
+            return subspan;
+        },
+        endian);
     ar.template archive<TypeSerializer>(value);
 }
 }
