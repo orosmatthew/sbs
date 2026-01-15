@@ -1,10 +1,13 @@
 #pragma once
 
 #include <algorithm>
+#include <bit>
 #include <climits>
 #include <cstddef>
 #include <functional>
+#include <ranges>
 #include <span>
+#include <vector>
 
 namespace sbs {
 
@@ -17,7 +20,7 @@ concept IntegerSerializable
     = std::is_integral_v<Type> || (std::is_enum_v<Type> && std::is_integral_v<std::underlying_type_t<Type>>);
 
 template <class Type>
-concept FloatSerializable = std::is_floating_point_v<Type>;
+concept FloatSerializable = std::is_floating_point_v<Type> && std::numeric_limits<Type>::is_iec559;
 
 template <class Type>
 concept ValueSerializable = IntegerSerializable<Type> || FloatSerializable<Type>;
@@ -26,7 +29,7 @@ template <class Type>
 concept MethodSerializable = requires(Type type, Archive& archive) { type.serialize(archive); };
 
 template <class Type>
-concept FunctionSerializable = requires(Type type, Archive& archive) { serialize(type, archive); };
+concept FunctionSerializable = requires(Type type, Archive& archive) { serialize(archive, type); };
 
 template <class Type>
 concept ObjectSerializable = MethodSerializable<Type> || FunctionSerializable<Type>;
@@ -35,8 +38,8 @@ template <class Type>
 concept DefaultSerializable = ValueSerializable<Type> || ObjectSerializable<Type>;
 
 template <class SerializeType, class Type>
-concept Serializer = requires(SerializeType serialize, Type& value, Archive& archive) {
-    { serialize.operator()(value, archive) } -> std::same_as<void>;
+concept Serializer = requires(SerializeType serialize, Archive& archive, Type& value) {
+    { serialize.operator()(archive, value) } -> std::same_as<void>;
 } && std::is_default_constructible_v<SerializeType>;
 
 using WriteCallback = std::function<void(std::span<const std::byte>)>;
@@ -50,14 +53,14 @@ struct DefaultSerializer;
 
 class Archive {
 public:
-    static Archive create_serialize(WriteCallback* write_callback)
+    static Archive create_serialize(WriteCallback write_callback, const std::endian endian)
     {
-        return Archive(write_callback);
+        return Archive(std::move(write_callback), endian);
     }
 
-    static Archive create_deserialize(ReadCallback* read_callback)
+    static Archive create_deserialize(ReadCallback read_callback, const std::endian endian)
     {
-        return Archive(read_callback);
+        return Archive(std::move(read_callback), endian);
     }
 
     template <class Value>
@@ -66,11 +69,21 @@ public:
     {
         if (m_mode == Mode::serialize) {
             std::span<const std::byte> bytes = std::as_bytes(std::span<const Value>(&value, 1));
-            std::invoke(*m_write_callback, bytes);
+            if (m_endian == std::endian::native) {
+                m_write_callback(bytes);
+            } else {
+                std::array<std::byte, sizeof(Value)> reversed;
+                std::ranges::copy(bytes | std::views::reverse, reversed.begin());
+                m_write_callback(reversed);
+            }
         } else {
-            std::span<const std::byte> source = std::invoke(*m_read_callback, sizeof(Value));
+            std::span<const std::byte> source = m_read_callback(sizeof(Value));
             std::span<std::byte> dest = std::as_writable_bytes(std::span<Value>(&value, 1));
-            std::ranges::copy(source, dest.begin());
+            if (m_endian == std::endian::native) {
+                std::ranges::copy(source, dest.begin());
+            } else {
+                std::ranges::copy(source | std::views::reverse, dest.begin());
+            }
         }
     }
 
@@ -78,14 +91,14 @@ public:
         requires(DefaultSerializable<Type>)
     void archive(Type& value)
     {
-        DefaultSerializer<Type> { }(value, *this);
+        DefaultSerializer<Type>()(*this, value);
     }
 
     template <class SerializeType, class Type>
         requires(Serializer<SerializeType, Type>)
     void archive(Type& value)
     {
-        SerializeType { }(value, *this);
+        SerializeType()(*this, value);
     }
 
     template <class Type>
@@ -93,7 +106,7 @@ public:
     void archive_copy(const Type& value)
     {
         Type copy = value;
-        DefaultSerializer<Type> { }(copy, *this);
+        DefaultSerializer<Type>()(*this, copy);
     }
 
     template <class SerializeType, class Type>
@@ -101,7 +114,7 @@ public:
     void archive_copy(const Type& value)
     {
         Type copy = value;
-        std::invoke(SerializeType { }, copy, *this);
+        SerializeType()(*this, copy);
     }
 
     [[nodiscard]] Mode mode() const
@@ -121,18 +134,21 @@ public:
 
 private:
     Mode m_mode;
-    WriteCallback* m_write_callback { };
-    ReadCallback* m_read_callback { };
+    std::endian m_endian;
+    WriteCallback m_write_callback { };
+    ReadCallback m_read_callback { };
 
-    explicit Archive(std::function<void(std::span<const std::byte>)>* write_callback)
+    explicit Archive(WriteCallback write_callback, const std::endian endian)
         : m_mode { Mode::serialize }
-        , m_write_callback { write_callback }
+        , m_endian { endian }
+        , m_write_callback { std::move(write_callback) }
     {
     }
 
-    explicit Archive(std::function<std::span<const std::byte>(size_t)>* read_callback)
+    explicit Archive(ReadCallback read_callback, const std::endian endian)
         : m_mode { Mode::deserialize }
-        , m_read_callback { read_callback }
+        , m_endian { endian }
+        , m_read_callback { std::move(read_callback) }
     {
     }
 };
@@ -140,57 +156,57 @@ private:
 template <class Type>
     requires(DefaultSerializable<Type>)
 struct DefaultSerializer {
-    void operator()(Type& value, Archive& archive) const
+    void operator()(Archive& archive, Type& value) const
     {
         if constexpr (ValueSerializable<Type>) {
             archive.archive_value(value);
         } else if constexpr (MethodSerializable<Type>) {
             value.serialize(archive);
         } else if constexpr (FunctionSerializable<Type>) {
-            serialize(value, archive);
+            serialize(archive, value);
         }
     }
 };
 
-template <class Type>
-    requires(DefaultSerializable<Type>)
-void serialize_using_callback(Type& value, WriteCallback write_callback)
+template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+    requires(Serializer<TypeSerializer, Type>)
+void serialize_using_callback(Type& value, WriteCallback write_callback, const std::endian endian = std::endian::little)
 {
-    auto archive = Archive::create_serialize(&write_callback);
-    archive(value);
+    auto ar = Archive::create_serialize(std::move(write_callback), endian);
+    ar.archive<TypeSerializer>(value);
 }
 
-template <class Type>
-    requires(DefaultSerializable<Type>)
-void deserialize_using_callback(Type& object, ReadCallback read_callback)
+template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+    requires(Serializer<TypeSerializer, Type>)
+void deserialize_using_callback(Type& value, ReadCallback read_callback, const std::endian endian = std::endian::little)
 {
-    auto archive = Archive::create_deserialize(&read_callback);
-    object.serialize(archive);
+    auto ar = Archive::create_deserialize(std::move(read_callback), endian);
+    ar.archive<TypeSerializer>(value);
 }
 
-template <class Type>
-    requires(DefaultSerializable<Type>)
-std::vector<std::byte> serialize_to_vector(Type& value)
+template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+    requires(Serializer<TypeSerializer, Type>)
+std::vector<std::byte> serialize_to_vector(Type& value, std::endian endian = std::endian::little)
 {
     std::vector<std::byte> result;
-    WriteCallback callback
-        = [&result](std::span<const std::byte> bytes) { result.insert(result.end(), bytes.begin(), bytes.end()); };
-    auto archive = Archive::create_serialize(&callback);
-    archive.archive(value);
+    auto ar = Archive::create_serialize(
+        [&result](std::span<const std::byte> bytes) { result.insert(result.end(), bytes.begin(), bytes.end()); },
+        endian);
+    ar.template archive<TypeSerializer>(value);
     return result;
 }
 
-template <class Type>
-    requires(DefaultSerializable<Type>)
-void deserialize_from_span(Type& value, std::span<const std::byte> bytes)
+template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+    requires(Serializer<TypeSerializer, Type>)
+void deserialize_from_span(Type& value, std::span<const std::byte> bytes, std::endian endian = std::endian::little)
 {
-    ReadCallback callback = [&bytes](const size_t size) {
-        std::span<const std::byte> subspan = bytes.subspan(0, size);
-        bytes = bytes.subspan(size, bytes.size() - size);
-        return subspan;
-    };
-    auto archive = Archive::create_deserialize(&callback);
-    archive.archive(value);
+    auto ar = Archive::create_deserialize(
+        [&bytes](const size_t size) {
+            std::span<const std::byte> subspan = bytes.subspan(0, size);
+            bytes = bytes.subspan(size, bytes.size() - size);
+            return subspan;
+        },
+        endian);
+    ar.template archive<TypeSerializer>(value);
 }
-
 }

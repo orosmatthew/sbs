@@ -9,6 +9,6 @@ add_library(sbs INTERFACE)
 target_include_directories(sbs INTERFACE include)
 
 if (SBS_BUILD_TESTS)
-    add_executable(sbs_tests tests/main.cpp)
+    add_executable(sbs_tests tests/test.cpp tests/main.cpp)
     target_link_libraries(sbs_tests PRIVATE sbs)
 endif ()

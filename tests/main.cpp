@@ -1,616 +1,48 @@
 #include <sbs/sbs.hpp>
 
-#include "test.hpp"
+// ReSharper disable CppUnusedIncludeDirective
+#include <sbs/serializers/array.hpp>
+#include <sbs/serializers/bitset.hpp>
+#include <sbs/serializers/chrono.hpp>
+#include <sbs/serializers/complex.hpp>
+#include <sbs/serializers/deque.hpp>
+#include <sbs/serializers/filesystem.hpp>
+#include <sbs/serializers/forward_list.hpp>
+#include <sbs/serializers/list.hpp>
+#include <sbs/serializers/map.hpp>
+#include <sbs/serializers/memory.hpp>
+#include <sbs/serializers/optional.hpp>
+#include <sbs/serializers/set.hpp>
+#include <sbs/serializers/string.hpp>
+#include <sbs/serializers/unordered_map.hpp>
+#include <sbs/serializers/unordered_set.hpp>
+#include <sbs/serializers/utility.hpp>
+#include <sbs/serializers/variant.hpp>
+#include <sbs/serializers/vector.hpp>
 
-#include <array>
-#include <bitset>
-#include <chrono>
-#include <complex>
-#include <cstdint>
-#include <deque>
-#include <forward_list>
-#include <list>
-#include <map>
-#include <optional>
-#include <ratio>
-#include <set>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <variant>
+#include "test.hpp"
 
 enum class MyEnum : uint16_t { first, second, third };
 
-template <
-    class Element,
-    class ElementSerializer = sbs::DefaultSerializer<Element>,
-    class Allocator = std::allocator<Element>>
-    requires(sbs::Serializer<ElementSerializer, Element> && std::is_default_constructible_v<Element>)
-struct VectorSerializer {
-    void operator()(std::vector<Element, Allocator>& vector, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const uint64_t size = vector.size();
-            ar.archive_copy(size);
-            for (Element& item : vector) {
-                ar.archive<ElementSerializer>(item);
-            }
-        } else {
-            vector.clear();
-            uint64_t size = 0;
-            ar.archive(size);
-            vector.resize(size);
-            for (Element& item : vector) {
-                ar.archive<ElementSerializer>(item);
-            }
-        }
-    }
-};
-
-template <
-    class Char,
-    class CharSerializer = sbs::DefaultSerializer<Char>,
-    class Traits = std::char_traits<Char>,
-    class Allocator = std::allocator<Char>>
-    requires(sbs::Serializer<CharSerializer, Char> && std::is_default_constructible_v<Char>)
-struct BasicStringSerializer {
-    void operator()(std::basic_string<Char, Traits, Allocator>& string, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const uint64_t size = string.size();
-            ar.archive_copy(size);
-            for (auto& element : string) {
-                ar.archive<CharSerializer>(element);
-            }
-        } else {
-            string.clear();
-            uint64_t size = 0;
-            ar.archive(size);
-            string.resize(size);
-            for (auto& element : string) {
-                ar.archive<CharSerializer>(element);
-            }
-        }
-    }
-};
-
-using StringSerializer = BasicStringSerializer<char>;
-
-template <class Element, std::size_t Size, class ElementSerializer = sbs::DefaultSerializer<Element>>
-    requires(sbs::Serializer<ElementSerializer, Element>)
-struct ArraySerializer {
-    void operator()(std::array<Element, Size>& array, sbs::Archive& ar) const
-    {
-        for (Element& element : array) {
-            ar.archive<ElementSerializer>(element);
-        }
-    }
-};
-
-template <
-    class Element,
-    class ElementSerializer = sbs::DefaultSerializer<Element>,
-    class Allocator = std::allocator<Element>>
-    requires(sbs::Serializer<ElementSerializer, Element> && std::is_default_constructible_v<Element>)
-struct DequeSerializer {
-    void operator()(std::deque<Element, Allocator>& deque, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const uint64_t size = deque.size();
-            ar.archive_copy(size);
-            for (Element& element : deque) {
-                ar.archive<ElementSerializer>(element);
-            }
-        } else {
-            deque.clear();
-            uint64_t size = 0;
-            ar.archive(size);
-            deque.resize(size);
-            for (Element& element : deque) {
-                ar.archive<ElementSerializer>(element);
-            }
-        }
-    }
-};
-
-template <
-    class Element,
-    class ElementSerializer = sbs::DefaultSerializer<Element>,
-    class Allocator = std::allocator<Element>>
-    requires(sbs::Serializer<ElementSerializer, Element> && std::is_default_constructible_v<Element>)
-struct ForwardListSerializer {
-    void operator()(std::forward_list<Element, Allocator>& forward_list, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const uint64_t size = std::distance(forward_list.begin(), forward_list.end());
-            ar.archive_copy(size);
-            for (Element& element : forward_list) {
-                ar.archive<ElementSerializer>(element);
-            }
-        } else {
-            forward_list.clear();
-            uint64_t size = 0;
-            ar.archive(size);
-            forward_list.resize(size);
-            for (Element& element : forward_list) {
-                ar.archive<ElementSerializer>(element);
-            }
-        }
-    }
-};
-
-template <
-    class Element,
-    class ElementSerializer = sbs::DefaultSerializer<Element>,
-    class Allocator = std::allocator<Element>>
-    requires(sbs::Serializer<ElementSerializer, Element> && std::is_default_constructible_v<Element>)
-struct ListSerializer {
-    void operator()(std::list<Element, Allocator>& list, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const uint64_t size = list.size();
-            ar.archive_copy(size);
-            for (Element& element : list) {
-                ar.archive<ElementSerializer>(element);
-            }
-        } else {
-            list.clear();
-            uint64_t size = 0;
-            ar.archive(size);
-            list.resize(size);
-            for (Element& element : list) {
-                ar.archive<ElementSerializer>(element);
-            }
-        }
-    }
-};
-
-template <
-    class Key,
-    class KeySerializer = sbs::DefaultSerializer<Key>,
-    class Compare = std::less<Key>,
-    class Allocator = std::allocator<Key>>
-    requires(sbs::Serializer<KeySerializer, Key> && std::copyable<Key> && std::is_default_constructible_v<Key>)
-struct SetSerializer {
-    void operator()(std::set<Key, Compare, Allocator>& set, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const uint64_t size = set.size();
-            ar.archive_copy(size);
-            for (const Key& key : set) {
-                ar.archive_copy<KeySerializer>(key);
-            }
-        } else {
-            set.clear();
-            uint64_t size = 0;
-            ar.archive(size);
-            for (uint64_t i = 0; i < size; ++i) {
-                auto key = Key();
-                ar.archive<KeySerializer>(key);
-                set.insert(std::move(key));
-            }
-        }
-    }
-};
-
-template <
-    class Key,
-    class Value,
-    class KeySerializer = sbs::DefaultSerializer<Key>,
-    class ValueSerializer = sbs::DefaultSerializer<Value>,
-    class Compare = std::less<Key>,
-    class Allocator = std::allocator<std::pair<const Key, Value>>>
-    requires(
-        sbs::Serializer<KeySerializer, Key> && sbs::Serializer<ValueSerializer, Value> && std::copyable<Key>
-        && std::is_default_constructible_v<Key> && std::is_default_constructible_v<Value>)
-struct MapSerializer {
-    void operator()(std::map<Key, Value, Compare, Allocator>& map, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const uint64_t size = map.size();
-            ar.archive_copy(size);
-            for (auto& [key, value] : map) {
-                ar.archive_copy<KeySerializer>(key);
-                ar.archive<ValueSerializer>(value);
-            }
-        } else {
-            map.clear();
-            uint64_t size = 0;
-            ar.archive(size);
-            for (uint64_t i = 0; i < size; ++i) {
-                auto key = Key();
-                ar.archive<KeySerializer>(key);
-                auto value = Value();
-                ar.archive<ValueSerializer>(value);
-                map.insert({ std::move(key), std::move(value) });
-            }
-        }
-    }
-};
-
-template <
-    class Key,
-    class KeySerializer = sbs::DefaultSerializer<Key>,
-    class Compare = std::less<Key>,
-    class Allocator = std::allocator<Key>>
-    requires(sbs::Serializer<KeySerializer, Key> && std::copyable<Key> && std::is_default_constructible_v<Key>)
-struct MultisetSerializer {
-    void operator()(std::multiset<Key, Compare, Allocator>& multiset, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const uint64_t size = multiset.size();
-            ar.archive_copy(size);
-            for (const Key& key : multiset) {
-                ar.archive_copy<KeySerializer>(key);
-            }
-        } else {
-            multiset.clear();
-            uint64_t size = 0;
-            ar.archive(size);
-            for (uint64_t i = 0; i < size; ++i) {
-                auto key = Key();
-                ar.archive<KeySerializer>(key);
-                multiset.insert(std::move(key));
-            }
-        }
-    }
-};
-
-template <
-    class Key,
-    class Value,
-    class KeySerializer = sbs::DefaultSerializer<Key>,
-    class ValueSerializer = sbs::DefaultSerializer<Value>,
-    class Compare = std::less<Key>,
-    class Allocator = std::allocator<std::pair<const Key, Value>>>
-    requires(
-        sbs::Serializer<KeySerializer, Key> && sbs::Serializer<ValueSerializer, Value> && std::copyable<Key>
-        && std::is_default_constructible_v<Key> && std::is_default_constructible_v<Value>)
-struct MultimapSerializer {
-    void operator()(std::multimap<Key, Value, Compare, Allocator>& multimap, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const uint64_t size = multimap.size();
-            ar.archive_copy(size);
-            for (auto& [key, value] : multimap) {
-                ar.archive_copy<KeySerializer>(key);
-                ar.archive<ValueSerializer>(value);
-            }
-        } else {
-            multimap.clear();
-            uint64_t size = 0;
-            ar.archive(size);
-            for (uint64_t i = 0; i < size; ++i) {
-                auto key = Key();
-                ar.archive<KeySerializer>(key);
-                auto value = Value();
-                ar.archive<ValueSerializer>(value);
-                multimap.insert({ std::move(key), std::move(value) });
-            }
-        }
-    }
-};
-
-template <
-    class Key,
-    class KeySerializer = sbs::DefaultSerializer<Key>,
-    class Hash = std::hash<Key>,
-    class KeyEqual = std::equal_to<Key>,
-    class Allocator = std::allocator<Key>>
-    requires(sbs::Serializer<KeySerializer, Key> && std::copyable<Key> && std::is_default_constructible_v<Key>)
-struct UnorderedSetSerializer {
-    void operator()(std::unordered_set<Key, Hash, KeyEqual, Allocator>& unordered_set, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const uint64_t size = unordered_set.size();
-            ar.archive_copy(size);
-            for (const Key& key : unordered_set) {
-                ar.archive_copy<KeySerializer>(key);
-            }
-        } else {
-            unordered_set.clear();
-            uint64_t size = 0;
-            ar.archive(size);
-            unordered_set.reserve(size);
-            for (uint64_t i = 0; i < size; ++i) {
-                auto key = Key();
-                ar.archive<KeySerializer>(key);
-                unordered_set.insert(std::move(key));
-            }
-        }
-    }
-};
-
-template <
-    class Key,
-    class Value,
-    class KeySerializer = sbs::DefaultSerializer<Key>,
-    class ValueSerializer = sbs::DefaultSerializer<Value>,
-    class Hash = std::hash<Key>,
-    class KeyEqual = std::equal_to<Key>,
-    class Allocator = std::allocator<std::pair<const Key, Value>>>
-    requires(
-        sbs::Serializer<KeySerializer, Key> && sbs::Serializer<ValueSerializer, Value> && std::copyable<Key>
-        && std::is_default_constructible_v<Key> && std::is_default_constructible_v<Value>)
-struct UnorderedMapSerializer {
-    void operator()(std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& unordered_map, sbs::Archive& ar)
-    {
-        if (ar.serializing()) {
-            const uint64_t size = unordered_map.size();
-            ar.archive_copy(size);
-            for (auto& [key, value] : unordered_map) {
-                ar.archive_copy<KeySerializer>(key);
-                ar.archive<ValueSerializer>(value);
-            }
-        } else {
-            unordered_map.clear();
-            uint64_t size = 0;
-            ar.archive(size);
-            unordered_map.reserve(size);
-            for (uint64_t i = 0; i < size; ++i) {
-                auto key = Key();
-                ar.archive<KeySerializer>(key);
-                auto value = Value();
-                ar.archive<ValueSerializer>(value);
-                unordered_map.insert({ std::move(key), std::move(value) });
-            }
-        }
-    }
-};
-
-template <
-    class Key,
-    class KeySerializer = sbs::DefaultSerializer<Key>,
-    class Hash = std::hash<Key>,
-    class KeyEqual = std::equal_to<Key>,
-    class Allocator = std::allocator<Key>>
-    requires(sbs::Serializer<KeySerializer, Key> && std::copyable<Key> && std::is_default_constructible_v<Key>)
-struct UnorderedMultisetSerializer {
-    void operator()(std::unordered_multiset<Key, Hash, KeyEqual, Allocator>& unordered_multiset, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const uint64_t size = unordered_multiset.size();
-            ar.archive_copy(size);
-            for (const Key& key : unordered_multiset) {
-                ar.archive_copy<KeySerializer>(key);
-            }
-        } else {
-            unordered_multiset.clear();
-            uint64_t size = 0;
-            ar.archive(size);
-            unordered_multiset.reserve(size);
-            for (uint64_t i = 0; i < size; ++i) {
-                auto key = Key();
-                ar.archive<KeySerializer>(key);
-                unordered_multiset.insert(std::move(key));
-            }
-        }
-    }
-};
-
-template <
-    class Key,
-    class Value,
-    class KeySerializer = sbs::DefaultSerializer<Key>,
-    class ValueSerializer = sbs::DefaultSerializer<Value>,
-    class Hash = std::hash<Key>,
-    class KeyEqual = std::equal_to<Key>,
-    class Allocator = std::allocator<std::pair<const Key, Value>>>
-    requires(
-        sbs::Serializer<KeySerializer, Key> && sbs::Serializer<ValueSerializer, Value> && std::copyable<Key>
-        && std::is_default_constructible_v<Key> && std::is_default_constructible_v<Value>)
-struct UnorderedMultimapSerializer {
-    void operator()(
-        std::unordered_multimap<Key, Value, Hash, KeyEqual, Allocator>& unordered_multimap, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const uint64_t size = unordered_multimap.size();
-            ar.archive_copy(size);
-            for (auto& [key, value] : unordered_multimap) {
-                ar.archive_copy<KeySerializer>(key);
-                ar.archive<ValueSerializer>(value);
-            }
-        } else {
-            unordered_multimap.clear();
-            uint64_t size = 0;
-            ar.archive(size);
-            unordered_multimap.reserve(size);
-            for (uint64_t i = 0; i < size; ++i) {
-                auto key = Key();
-                ar.archive<KeySerializer>(key);
-                auto value = Value();
-                ar.archive<ValueSerializer>(value);
-                unordered_multimap.insert({ std::move(key), std::move(value) });
-            }
-        }
-    }
-};
-
-template <class Value, class ValueSerializer = sbs::DefaultSerializer<Value>>
-    requires(sbs::Serializer<ValueSerializer, Value> && std::is_default_constructible_v<Value>)
-struct OptionalSerializer {
-    void operator()(std::optional<Value>& optional, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const bool has_value = optional.has_value();
-            ar.archive_copy(has_value);
-            if (has_value) {
-                ar.archive<ValueSerializer>(optional.value());
-            }
-        } else {
-            optional.reset();
-            bool has_value = false;
-            ar.archive(has_value);
-            if (has_value) {
-                auto value = Value();
-                ar.archive<ValueSerializer>(value);
-                optional = value;
-            }
-        }
-    }
-};
-
-template <class Variant, uint64_t Index = 0>
-void construct_variant_at_index(Variant& variant, const uint64_t index)
-{
-    if constexpr (Index >= std::variant_size_v<Variant>) {
-    } else if (Index == index) {
-        using Type = std::variant_alternative_t<Index, Variant>;
-        static_assert(std::is_default_constructible_v<Type>);
-        auto value = Type();
-        variant = value;
-    } else {
-        return construct_variant_at_index<Variant, Index + 1>(variant, index);
-    }
-}
-
-template <class... Types>
-    requires((sbs::DefaultSerializable<Types> && std::is_default_constructible_v<Types>) && ...)
-struct VariantDefaultSerializer {
-    void operator()(std::variant<Types...>& variant, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const uint64_t index = variant.index();
-            ar.archive_copy(index);
-            std::visit([&]<class T>(T& value) { ar.archive(value); }, variant);
-        } else {
-            uint64_t index = 0;
-            ar.archive(index);
-            construct_variant_at_index<std::variant<Types...>>(variant, index);
-            std::visit([&]<class T>(T& value) { ar.archive(value); }, variant);
-        }
-    }
-};
-
-template <
-    class First,
-    class Second,
-    class FirstSerializer = sbs::DefaultSerializer<First>,
-    class SecondSerializer = sbs::DefaultSerializer<Second>>
-    requires(sbs::Serializer<FirstSerializer, First> && sbs::Serializer<SecondSerializer, Second>)
-struct PairSerializer {
-    void operator()(std::pair<First, Second>& pair, sbs::Archive& ar) const
-    {
-        ar.archive<FirstSerializer>(pair.first);
-        ar.archive<SecondSerializer>(pair.second);
-    }
-};
-
-template <class Tick, class TickSerializer = sbs::DefaultSerializer<Tick>, class Period = std::ratio<1>>
-    requires(sbs::Serializer<TickSerializer, Tick> && std::copyable<Tick> && std::is_default_constructible_v<Tick>)
-struct ChronoDurationSerializer {
-    void operator()(std::chrono::duration<Tick, Period>& duration, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const Tick ticks = duration.count();
-            ar.archive_copy<TickSerializer>(ticks);
-        } else {
-            auto ticks = Tick();
-            ar.archive<TickSerializer>(ticks);
-            duration = std::chrono::duration<Tick, Period> { ticks };
-        }
-    }
-};
-
-template <class Clock, class Duration = Clock::duration, class DurationSerializer = sbs::DefaultSerializer<Duration>>
-    requires(
-        sbs::Serializer<DurationSerializer, Duration> && std::copyable<Duration>
-        && std::is_default_constructible_v<Duration>)
-struct ChronoTimePointSerializer {
-    void operator()(std::chrono::time_point<Clock, Duration>& time_point, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            const Duration ticks = time_point.time_since_epoch();
-            ar.archive_copy<DurationSerializer>(ticks);
-        } else {
-            auto duration = Duration();
-            ar.archive<DurationSerializer>(duration);
-            time_point = std::chrono::time_point<Clock, Duration> { duration };
-        }
-    }
-};
-
-template <class Tuple, std::size_t Index = 0>
-void serialize_tuple(Tuple& tuple, sbs::Archive& ar)
-{
-    if constexpr (Index < std::tuple_size_v<Tuple>) {
-        ar.archive(std::get<Index>(tuple));
-        serialize_tuple<Tuple, Index + 1>(tuple, ar);
-    }
-}
-
-template <class... Types>
-    requires(sbs::DefaultSerializable<Types> && ...)
-struct TupleDefaultSerializer {
-    void operator()(std::tuple<Types...>& tuple, sbs::Archive& ar) const
-    {
-        serialize_tuple(tuple, ar);
-    }
-};
-
-template <class Type, class TypeSerializer = sbs::DefaultSerializer<Type>>
-    requires(sbs::Serializer<TypeSerializer, Type> && std::copyable<Type> && std::is_default_constructible_v<Type>)
-struct ComplexSerializer {
-    void operator()(std::complex<Type>& complex, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            ar.archive_copy<TypeSerializer>(complex.real());
-            ar.archive_copy<TypeSerializer>(complex.imag());
-        } else {
-            auto real = Type();
-            ar.archive<TypeSerializer>(real);
-            complex.real(real);
-            auto imag = Type();
-            ar.archive<TypeSerializer>(imag);
-            complex.imag(imag);
-        }
-    }
-};
-
-template <std::size_t bits>
-struct BitsetSerializer {
-    void operator()(std::bitset<bits>& bitset, sbs::Archive& ar) const
-    {
-        if (ar.serializing()) {
-            uint8_t buffer = 0;
-            for (size_t i = 0; i < bitset.size(); ++i) {
-                if (bitset.test(i)) {
-                    buffer |= 1 << (i % 8);
-                }
-                if (i % 8 == 7 || i == bitset.size() - 1) {
-                    ar.archive<uint8_t>(buffer);
-                    buffer = 0;
-                }
-            }
-        } else {
-            bitset.reset();
-            uint8_t buffer = 0;
-            for (size_t i = 0; i < bitset.size(); ++i) {
-                if (i % 8 == 0) {
-                    ar.archive<uint8_t>(buffer);
-                }
-                if (buffer & 1 << i % 8) {
-                    bitset.set(i, true);
-                }
-            }
-        }
-    }
-};
+namespace inner {
 
 struct OtherStruct {
     uint64_t thing;
 };
 
-void serialize(OtherStruct& o, sbs::Archive& ar)
+void serialize(sbs::Archive& ar, OtherStruct& o)
 {
     ar.archive(o.thing);
+}
+
 }
 
 struct SimpleStruct {
     uint8_t a;
     uint16_t b;
     uint8_t c;
-    OtherStruct d;
+    inner::OtherStruct d;
+    float f;
     std::vector<uint16_t> numbers;
     std::vector<std::vector<uint8_t>> multi_nums;
     std::string str;
@@ -636,49 +68,261 @@ struct SimpleStruct {
     std::chrono::time_point<std::chrono::steady_clock> time_point;
     std::complex<float> complex;
     std::bitset<200> bitset;
+    std::unique_ptr<int64_t> unique_ptr;
+    std::unique_ptr<int64_t> unique_ptr_null;
+    std::filesystem::path filesystem_path;
 
     void serialize(sbs::Archive& ar)
     {
-        // ar.archive(a);
-        // ar.archive(b);
-        // ar.archive(c);
-        // ar.archive(d);
-        // ar.archive<VectorSerializer<uint16_t>>(numbers);
-        // ar.archive<VectorSerializer<std::vector<uint8_t>, VectorSerializer<uint8_t>>>(multi_nums);
-        // ar.archive<StringSerializer>(str);
-        // ar.archive<ArraySerializer<uint8_t, 4>>(nums_array);
-        // ar.archive(my_enum);
-        // ar.archive<DequeSerializer<uint8_t>>(deque);
-        // ar.archive<ForwardListSerializer<uint8_t>>(forward_list);
-        // ar.archive<ListSerializer<uint8_t>>(list);
-        // ar.archive<SetSerializer<uint8_t>>(set);
-        // ar.archive<MapSerializer<std::string, uint16_t, StringSerializer>>(map);
-        // ar.archive<MultisetSerializer<uint8_t>>(multiset);
-        // ar.archive<MultimapSerializer<std::string, uint16_t, StringSerializer>>(multimap);
-        // ar.archive<UnorderedSetSerializer<std::string, StringSerializer>>(unordered_set);
-        // ar.archive<UnorderedMapSerializer<std::string, uint16_t, StringSerializer>>(unordered_map);
-        // ar.archive<UnorderedMultisetSerializer<uint8_t>>(unordered_multiset);
-        // ar.archive<UnorderedMultimapSerializer<std::string, uint16_t, StringSerializer>>(unordered_multimap);
-        // ar.archive<OptionalSerializer<uint8_t>>(optional);
-        // ar.archive<VariantDefaultSerializer<uint8_t, float>>(variant1);
-        // ar.archive<VariantDefaultSerializer<uint8_t, float>>(variant2);
-        // ar.archive<PairSerializer<uint8_t, std::string, sbs::DefaultSerializer<uint8_t>, StringSerializer>>(pair);
-        // ar.archive<TupleDefaultSerializer<int, double, float>>(tuple);
-        // ar.archive<ChronoDurationSerializer<double>>(duration);
-        // ar.archive<ChronoTimePointSerializer<
-        //     std::chrono::steady_clock,
-        //     std::chrono::steady_clock::duration,
-        //     ChronoDurationSerializer<
-        //         std::chrono::steady_clock::duration::rep,
-        //         sbs::DefaultSerializer<std::chrono::steady_clock::rep>,
-        //         std::chrono::steady_clock::duration::period>>>(time_point);
-        // ar.archive<ComplexSerializer<float>>(complex);
-        ar.archive<BitsetSerializer<200>>(bitset);
+        ar.archive(a);
+        ar.archive(b);
+        ar.archive(c);
+        ar.archive(d);
+        ar.archive(f);
+        ar.archive(numbers);
+        ar.archive(multi_nums);
+        ar.archive(str);
+        ar.archive(nums_array);
+        ar.archive(my_enum);
+        ar.archive(deque);
+        ar.archive(forward_list);
+        ar.archive(list);
+        ar.archive(set);
+        ar.archive(map);
+        ar.archive(multiset);
+        ar.archive(multimap);
+        ar.archive(unordered_set);
+        ar.archive(unordered_map);
+        ar.archive(unordered_multiset);
+        ar.archive(unordered_multimap);
+        ar.archive(optional);
+        ar.archive(variant1);
+        ar.archive(variant2);
+        ar.archive(pair);
+        ar.archive(tuple);
+        ar.archive(duration);
+        ar.archive(time_point);
+        ar.archive(complex);
+        ar.archive(bitset);
+        ar.archive(unique_ptr);
+        ar.archive(unique_ptr_null);
+        ar.archive(filesystem_path);
     }
 };
 
+void serialize_ints()
+{
+    test_case("serialize ints");
+
+    struct Struct {
+        uint8_t uint8;
+        uint16_t uint16;
+        uint32_t uint32;
+        uint64_t uint64;
+        int8_t int8;
+        int16_t int16;
+        int32_t int32;
+        int64_t int64;
+
+        void serialize(sbs::Archive& ar)
+        {
+            ar.archive(uint8);
+            ar.archive(uint16);
+            ar.archive(uint32);
+            ar.archive(uint64);
+            ar.archive(int8);
+            ar.archive(int16);
+            ar.archive(int32);
+            ar.archive(int64);
+        }
+
+        bool operator==(const Struct& other) const
+        {
+            return uint8 == other.uint8 && uint16 == other.uint16 && uint32 == other.uint32 && uint64 == other.uint64
+                && int8 == other.int8 && int16 == other.int16 && int32 == other.int32 && int64 == other.int64;
+        }
+    };
+
+    Struct s_in { .uint8 = 2,
+                  .uint16 = 60000,
+                  .uint32 = 4000000000,
+                  .uint64 = 100000000000000ULL,
+                  .int8 = -2,
+                  .int16 = -30000,
+                  .int32 = -1000000000,
+                  .int64 = -100000000000000LL };
+    std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+    ASSERT(bytes.size() == 30);
+    Struct s_out { };
+    sbs::deserialize_from_span(s_out, bytes);
+    ASSERT(s_in == s_out);
+}
+
+void serialize_floats()
+{
+    test_case("serialize floats");
+
+    struct Struct {
+        float f;
+        double d;
+
+        void serialize(sbs::Archive& ar)
+        {
+            ar.archive(f);
+            ar.archive(d);
+        }
+
+        bool operator==(const Struct& other) const
+        {
+            return f == other.f && d == other.d;
+        }
+    };
+
+    test_section("positives");
+    {
+        Struct s_in { .f = 1.5f, .d = 2.3 };
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+        ASSERT(bytes.size() == 12);
+        Struct s_out { };
+        sbs::deserialize_from_span(s_out, bytes);
+        ASSERT(s_in == s_out);
+    }
+
+    test_section("negatives");
+    {
+        Struct s_in { .f = -2.3f, .d = -1.5 };
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+        ASSERT(bytes.size() == 12);
+        Struct s_out { };
+        sbs::deserialize_from_span(s_out, bytes);
+        ASSERT(s_in == s_out);
+    }
+}
+
+void serialize_enum()
+{
+    test_case("serialize enum");
+
+    enum class MyEnum : uint16_t { first, second, third, big = 60000 };
+
+    struct Struct {
+        MyEnum e1;
+        MyEnum e2;
+        MyEnum e3;
+        MyEnum e4;
+
+        void serialize(sbs::Archive& ar)
+        {
+            ar.archive(e1);
+            ar.archive(e2);
+            ar.archive(e3);
+            ar.archive(e4);
+        }
+
+        bool operator==(const Struct& other) const
+        {
+            return e1 == other.e1 && e2 == other.e2 && e3 == other.e3 && e4 == other.e4;
+        }
+    };
+
+    Struct s_in { .e1 = MyEnum::first, .e2 = MyEnum::second, .e3 = MyEnum::third, .e4 = MyEnum::big };
+    std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+    ASSERT(bytes.size() == 8);
+    Struct s_out { };
+    sbs::deserialize_from_span(s_out, bytes);
+    ASSERT(s_in == s_out);
+}
+
+struct FunctionSerializableStruct {
+    uint8_t i;
+    float f;
+
+    bool operator==(const FunctionSerializableStruct& other) const
+    {
+        return i == other.i && f == other.f;
+    }
+};
+
+void serialize(sbs::Archive& ar, FunctionSerializableStruct& s)
+{
+    ar.archive(s.i);
+    ar.archive(s.f);
+}
+
+void serialize_function_serializable()
+{
+    test_case("serialize function serializable struct");
+
+    FunctionSerializableStruct s_in { .i = 23, .f = -50000.0f };
+    std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+    ASSERT(bytes.size() == 5);
+    FunctionSerializableStruct s_out { };
+    sbs::deserialize_from_span(s_out, bytes);
+    ASSERT(s_in == s_out);
+}
+
+void serialize_nested_structs()
+{
+    test_case("serialize nested structs");
+
+    struct StructInner {
+        uint64_t i1;
+        int32_t i2;
+
+        void serialize(sbs::Archive& ar)
+        {
+            ar.archive(i1);
+            ar.archive(i2);
+        }
+
+        bool operator==(const StructInner& other) const
+        {
+            return i1 == other.i1 && i2 == other.i2;
+        }
+    };
+
+    struct StructOuter {
+        uint16_t i1;
+        double d;
+        StructInner inner;
+        int64_t i2;
+        float f;
+
+        void serialize(sbs::Archive& ar)
+        {
+            ar.archive(i1);
+            ar.archive(d);
+            ar.archive(inner);
+            ar.archive(i2);
+            ar.archive(f);
+        }
+
+        bool operator==(const StructOuter& other) const
+        {
+            return i1 == other.i1 && d == other.d && inner == other.inner && i2 == other.i2 && f == other.f;
+        }
+    };
+
+    StructOuter s_in { .i1 = 1234,
+                       .d = -70273.0,
+                       .inner = { .i1 = 3828362829372893ULL, .i2 = -23 },
+                       .i2 = -3828362829372893LL,
+                       .f = 93.0f };
+    std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+    ASSERT(bytes.size() == 34);
+    StructOuter s_out { };
+    sbs::deserialize_from_span(s_out, bytes);
+    ASSERT(s_in == s_out);
+}
+
 int main()
 {
+    serialize_ints();
+    serialize_floats();
+    serialize_enum();
+    serialize_function_serializable();
+    serialize_nested_structs();
+
     SimpleStruct s {
         .a = 1,
         .b = 2,
@@ -796,6 +440,11 @@ int main()
     s.bitset.set(100, true);
     s.bitset.set(150, true);
     s.bitset.set(198, true);
+
+    s.unique_ptr = std::make_unique<int64_t>(1337);
+    s.unique_ptr_null = nullptr;
+
+    s.filesystem_path = "C:\\Windows\\System32";
 
     uint64_t thing = 1024;
     std::vector<std::byte> thing_bytes = sbs::serialize_to_vector(thing);
