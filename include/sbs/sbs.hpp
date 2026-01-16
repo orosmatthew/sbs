@@ -45,8 +45,6 @@ concept Serializer = requires(SerializeType serialize, Archive& archive, Type& v
 using WriteCallback = std::function<void(std::span<const std::byte>)>;
 using ReadCallback = std::function<std::span<const std::byte>(size_t)>;
 
-enum class Mode { serialize, deserialize };
-
 template <class Type>
     requires(DefaultSerializable<Type>)
 struct DefaultSerializer;
@@ -116,11 +114,6 @@ public:
         SerializeType()(*this, copy);
     }
 
-    [[nodiscard]] Mode mode() const
-    {
-        return m_mode;
-    }
-
     [[nodiscard]] bool serializing() const
     {
         return m_mode == Mode::serialize;
@@ -132,6 +125,8 @@ public:
     }
 
 private:
+    enum class Mode { serialize, deserialize };
+
     Mode m_mode;
     std::endian m_endian;
     WriteCallback m_write_callback { };
