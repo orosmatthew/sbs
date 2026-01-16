@@ -61,7 +61,8 @@ public:
         return Archive(std::move(read_callback), endian);
     }
 
-    template <ValueSerializable Value>
+    template <class Value>
+        requires(ValueSerializable<Value>)
     void archive_value(Value& value)
     {
         if (m_mode == Mode::serialize) {
