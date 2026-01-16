@@ -110,6 +110,136 @@ struct SimpleStruct {
     }
 };
 
+void assert_bytes_equal(const std::span<const std::byte> bytes, const std::initializer_list<uint8_t>& expected)
+{
+    ASSERT(bytes.size() == expected.size());
+    for (size_t i = 0; i < bytes.size(); ++i) {
+        ASSERT(bytes[i] == std::byte { *(expected.begin() + i) });
+    }
+}
+
+void test_endianness()
+{
+    test_case("test endianness");
+
+    uint8_t uint8 = 37;
+    uint16_t uint16 = 6123;
+    uint32_t uint32 = 2124521023;
+    uint64_t uint64 = 13244784333009251345ULL;
+
+    test_section("uint8 little endian");
+    {
+        const std::vector<std::byte> b = sbs::serialize_to_vector(uint8, std::endian::little);
+        assert_bytes_equal(b, { 0x25 });
+        uint8_t r = 0;
+        sbs::deserialize_from_span(r, b, std::endian::little);
+        ASSERT(r == uint8);
+    }
+
+    test_section("uint16 little endian");
+    {
+        const std::vector<std::byte> b = sbs::serialize_to_vector(uint16, std::endian::little);
+        assert_bytes_equal(b, { 0xEB, 0x17 });
+        uint16_t r = 0;
+        sbs::deserialize_from_span(r, b, std::endian::little);
+        ASSERT(r == uint16);
+    }
+
+    test_section("uint32 little endian");
+    {
+        const std::vector<std::byte> b = sbs::serialize_to_vector(uint32, std::endian::little);
+        assert_bytes_equal(b, { 0x3F, 0x9E, 0xA1, 0x7E });
+        uint32_t r = 0;
+        sbs::deserialize_from_span(r, b, std::endian::little);
+        ASSERT(r == uint32);
+    }
+
+    test_section("uint64 little endian");
+    {
+        const std::vector<std::byte> b = sbs::serialize_to_vector(uint64, std::endian::little);
+        assert_bytes_equal(b, { 0x11, 0xEC, 0xAC, 0x4F, 0x2D, 0xED, 0xCE, 0xB7 });
+        uint64_t r = 0;
+        sbs::deserialize_from_span(r, b, std::endian::little);
+        ASSERT(r == uint64);
+    }
+
+    test_section("uint8 big endian");
+    {
+        const std::vector<std::byte> b = sbs::serialize_to_vector(uint8, std::endian::big);
+        assert_bytes_equal(b, { 0x25 });
+        uint8_t r = 0;
+        sbs::deserialize_from_span(r, b, std::endian::big);
+        ASSERT(r == uint8);
+    }
+
+    test_section("uint16 big endian");
+    {
+        const std::vector<std::byte> b = sbs::serialize_to_vector(uint16, std::endian::big);
+        assert_bytes_equal(b, { 0x17, 0xEB });
+        uint16_t r = 0;
+        sbs::deserialize_from_span(r, b, std::endian::big);
+        ASSERT(r == uint16);
+    }
+
+    test_section("uint32 big endian");
+    {
+        const std::vector<std::byte> b = sbs::serialize_to_vector(uint32, std::endian::big);
+        assert_bytes_equal(b, { 0x7E, 0xA1, 0x9E, 0x3F });
+        uint32_t r = 0;
+        sbs::deserialize_from_span(r, b, std::endian::big);
+        ASSERT(r == uint32);
+    }
+
+    test_section("uint64 big endian");
+    {
+        const std::vector<std::byte> b = sbs::serialize_to_vector(uint64, std::endian::big);
+        assert_bytes_equal(b, { 0xB7, 0xCE, 0xED, 0x2D, 0x4F, 0xAC, 0xEC, 0x11 });
+        uint64_t r = 0;
+        sbs::deserialize_from_span(r, b, std::endian::big);
+        ASSERT(r == uint64);
+    }
+
+    test_section("float little endian");
+    {
+        float f = 12.34f;
+        const std::vector<std::byte> b = sbs::serialize_to_vector(f, std::endian::little);
+        assert_bytes_equal(b, { 0xA4, 0x70, 0x45, 0x41 });
+        float r = 0;
+        sbs::deserialize_from_span(r, b, std::endian::little);
+        ASSERT(r == f);
+    }
+
+    test_section("float big endian");
+    {
+        float f = 12.34f;
+        const std::vector<std::byte> b = sbs::serialize_to_vector(f, std::endian::big);
+        assert_bytes_equal(b, { 0x41, 0x45, 0x70, 0xA4 });
+        float r = 0;
+        sbs::deserialize_from_span(r, b, std::endian::big);
+        ASSERT(r == f);
+    }
+
+    test_section("double little endian");
+    {
+        double d = 1234.5678;
+        const std::vector<std::byte> b = sbs::serialize_to_vector(d, std::endian::little);
+        assert_bytes_equal(b, { 0xAD, 0xFA, 0x5C, 0x6D, 0x45, 0x4A, 0x93, 0x40 });
+        double r = 0;
+        sbs::deserialize_from_span(r, b, std::endian::little);
+        ASSERT(r == d);
+    }
+
+    test_section("double big endian");
+    {
+        double d = 1234.5678;
+        const std::vector<std::byte> b = sbs::serialize_to_vector(d, std::endian::big);
+        assert_bytes_equal(b, { 0x40, 0x93, 0x4A, 0x45, 0x6D, 0x5C, 0xFA, 0xAD });
+        double r = 0;
+        sbs::deserialize_from_span(r, b, std::endian::big);
+        ASSERT(r == d);
+    }
+}
+
 void serialize_ints()
 {
     test_case("serialize ints");
@@ -317,6 +447,7 @@ void serialize_nested_structs()
 
 int main()
 {
+    test_endianness();
     serialize_ints();
     serialize_floats();
     serialize_enum();
