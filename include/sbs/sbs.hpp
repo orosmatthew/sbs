@@ -2,9 +2,9 @@
 
 #include <algorithm>
 #include <bit>
-#include <climits>
 #include <cstddef>
 #include <functional>
+#include <limits>
 #include <ranges>
 #include <span>
 #include <vector>
@@ -193,7 +193,7 @@ std::vector<std::byte> serialize_to_vector(Type& value, std::endian endian = std
 
 template <class Type, class TypeSerializer = DefaultSerializer<Type>>
     requires(Serializer<TypeSerializer, Type>)
-void deserialize_from_span(Type& value, std::span<const std::byte> bytes, std::endian endian = std::endian::little)
+void deserialize_from_span(std::span<const std::byte> bytes, Type& value, std::endian endian = std::endian::little)
 {
     auto ar = Archive::create_deserialize(
         [&bytes](const size_t size) {
