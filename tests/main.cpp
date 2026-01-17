@@ -114,6 +114,8 @@ int main()
     serialize_map();
     serialize_memory();
     serialize_optional();
+    serialize_set();
+    serialize_string();
 
     SimpleStruct s {
         .a = 1,

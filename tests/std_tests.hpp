@@ -12,6 +12,8 @@
 #include <sbs/serializers/map.hpp>
 #include <sbs/serializers/memory.hpp>
 #include <sbs/serializers/optional.hpp>
+#include <sbs/serializers/set.hpp>
+#include <sbs/serializers/string.hpp>
 
 inline void serialize_array()
 {
@@ -228,5 +230,79 @@ inline void serialize_optional()
             sbs::deserialize_from_span(bytes, opt_out);
             ASSERT(!opt_in.has_value() && !opt_out.has_value());
         }
+    }
+}
+
+inline void serialize_set()
+{
+    test_case("serialize <set>");
+
+    test_section("std::set");
+    {
+        std::set<uint8_t> set_in { };
+        set_in.insert(0);
+        set_in.insert(1);
+        set_in.insert(2);
+        set_in.insert(1);
+        set_in.insert(0);
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
+        std::set<uint8_t> set_out { };
+        sbs::deserialize_from_span(bytes, set_out);
+        ASSERT(set_in == set_out);
+    }
+
+    test_section("std::multiset");
+    {
+        std::multiset<uint8_t> set_in { };
+        set_in.insert(0);
+        set_in.insert(1);
+        set_in.insert(2);
+        set_in.insert(1);
+        set_in.insert(0);
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
+        std::multiset<uint8_t> set_out;
+        sbs::deserialize_from_span(bytes, set_out);
+        ASSERT(set_in == set_out);
+    }
+}
+
+inline void serialize_string()
+{
+    test_case("serialize <string>");
+
+    test_section("std::string");
+    {
+        std::string str_in = "Hello World!";
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
+        std::string str_out { };
+        sbs::deserialize_from_span(bytes, str_out);
+        ASSERT(str_in == str_out);
+    }
+
+    test_section("std::u8string");
+    {
+        std::u8string str_in = u8"Hello 👋 World! 🌎";
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
+        std::u8string str_out { };
+        sbs::deserialize_from_span(bytes, str_out);
+        ASSERT(str_in == str_out);
+    }
+
+    test_section("std::u16string");
+    {
+        std::u16string str_in = u"Hello 👋 World! 🌎";
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
+        std::u16string str_out { };
+        sbs::deserialize_from_span(bytes, str_out);
+        ASSERT(str_in == str_out);
+    }
+
+    test_section("std::u32string");
+    {
+        std::u32string str_in = U"Hello 👋 World! 🌎";
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
+        std::u32string str_out { };
+        sbs::deserialize_from_span(bytes, str_out);
+        ASSERT(str_in == str_out);
     }
 }
