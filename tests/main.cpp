@@ -98,6 +98,8 @@ int main()
 {
     test_endianness();
     serialize_ints();
+    serialize_chars();
+    serialize_bool();
     serialize_floats();
     serialize_enum();
     serialize_function_serializable();

@@ -277,6 +277,55 @@ inline void serialize_ints()
     }
 }
 
+inline void serialize_chars()
+{
+    test_case("serialize chars");
+
+    struct Struct {
+        char8_t c8;
+        char16_t c16;
+        char32_t c32;
+
+        void serialize(sbs::Archive& ar)
+        {
+            ar.archive(c8);
+            ar.archive(c16);
+            ar.archive(c32);
+        }
+    };
+
+    Struct s_in { .c8 = 0x12, .c16 = 0x1234, .c32 = 0x12345678 };
+    std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+    Struct s_out { };
+    sbs::deserialize_from_span(bytes, s_out);
+    ASSERT(s_in.c8 == s_out.c8);
+    ASSERT(s_in.c16 == s_out.c16);
+    ASSERT(s_in.c32 == s_out.c32);
+}
+
+inline void serialize_bool()
+{
+    test_case("serialize bool");
+
+    struct Struct {
+        bool t;
+        bool f;
+
+        void serialize(sbs::Archive& ar)
+        {
+            ar.archive(t);
+            ar.archive(f);
+        }
+    };
+
+    Struct s_in { .t = true, .f = false };
+    std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+    Struct s_out { };
+    sbs::deserialize_from_span(bytes, s_out);
+    ASSERT(s_out.t == s_in.t);
+    ASSERT(s_out.f == s_in.f);
+}
+
 inline void serialize_floats()
 {
     test_case("serialize floats");
