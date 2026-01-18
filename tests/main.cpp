@@ -116,6 +116,9 @@ int main()
     serialize_optional();
     serialize_set();
     serialize_string();
+    serialize_unordered_map();
+    serialize_unordered_set();
+    serialize_utility();
 
     SimpleStruct s {
         .a = 1,

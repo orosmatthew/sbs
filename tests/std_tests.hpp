@@ -14,6 +14,9 @@
 #include <sbs/serializers/optional.hpp>
 #include <sbs/serializers/set.hpp>
 #include <sbs/serializers/string.hpp>
+#include <sbs/serializers/unordered_map.hpp>
+#include <sbs/serializers/unordered_set.hpp>
+#include <sbs/serializers/utility.hpp>
 
 inline void serialize_array()
 {
@@ -304,5 +307,97 @@ inline void serialize_string()
         std::u32string str_out { };
         sbs::deserialize_from_span(bytes, str_out);
         ASSERT(str_in == str_out);
+    }
+}
+
+inline void serialize_unordered_map()
+{
+    test_case("serialize <unordered_map>");
+
+    test_section("std::unordered_map");
+    {
+        std::unordered_map<std::string, uint16_t> map_in { };
+        map_in.insert({ "one", 1 });
+        map_in.insert({ "two", 4 });
+        map_in.insert({ "three", 9 });
+        map_in.insert({ "four", 16 });
+        map_in.insert({ "two", 2 });
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(map_in);
+        std::unordered_map<std::string, uint16_t> map_out { };
+        sbs::deserialize_from_span(bytes, map_out);
+        ASSERT(map_in == map_out);
+    }
+
+    test_section("std::unordered_multimap");
+    {
+        std::unordered_multimap<std::string, uint16_t> map_in { };
+        map_in.insert({ "one", 1 });
+        map_in.insert({ "three", 3 });
+        map_in.insert({ "two", 4 });
+        map_in.insert({ "one", 1 });
+        map_in.insert({ "four", 4 });
+        map_in.insert({ "three", 9 });
+        map_in.insert({ "two", 2 });
+        map_in.insert({ "four", 16 });
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(map_in);
+        std::unordered_multimap<std::string, uint16_t> map_out { };
+        sbs::deserialize_from_span(bytes, map_out);
+        ASSERT(map_in == map_out);
+    }
+}
+
+inline void serialize_unordered_set()
+{
+    test_case("serialize <unordered_set>");
+
+    test_section("std::unordered_set");
+    {
+        std::unordered_set<std::string> set_in { };
+        set_in.insert("zero");
+        set_in.insert("one");
+        set_in.insert("two");
+        set_in.insert("one");
+        set_in.insert("zero");
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
+        std::unordered_set<std::string> set_out { };
+        sbs::deserialize_from_span(bytes, set_out);
+        ASSERT(set_in == set_out);
+    }
+
+    test_section("std::unordered_multiset");
+    {
+        std::unordered_multiset<uint8_t> set_in { };
+        set_in.insert(0);
+        set_in.insert(1);
+        set_in.insert(2);
+        set_in.insert(1);
+        set_in.insert(0);
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
+        std::unordered_multiset<uint8_t> set_out { };
+        sbs::deserialize_from_span(bytes, set_out);
+        ASSERT(set_in == set_out);
+    }
+}
+
+inline void serialize_utility()
+{
+    test_case("serialize <utility>");
+
+    test_section("std::pair");
+    {
+        std::pair<uint8_t, std::string> pair_in { 8, "eight" };
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(pair_in);
+        std::pair<uint8_t, std::string> pair_out { };
+        sbs::deserialize_from_span(bytes, pair_out);
+        ASSERT(pair_in == pair_out);
+    }
+
+    test_section("std::tuple");
+    {
+        std::tuple<uint8_t, std::string, double> tuple_in { 7, "seven", 7.0 };
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(tuple_in);
+        std::tuple<uint8_t, std::string, double> tuple_out { };
+        sbs::deserialize_from_span(bytes, tuple_out);
+        ASSERT(tuple_in == tuple_out);
     }
 }
