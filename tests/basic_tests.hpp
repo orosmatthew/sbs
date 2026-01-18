@@ -8,6 +8,7 @@
 
 #include <array>
 #include <bit>
+#include <cmath>
 #include <cstdint>
 #include <vector>
 
@@ -145,48 +146,135 @@ inline void serialize_ints()
 {
     test_case("serialize ints");
 
-    struct Struct {
-        uint8_t uint8;
-        uint16_t uint16;
-        uint32_t uint32;
-        uint64_t uint64;
-        int8_t int8;
-        int16_t int16;
-        int32_t int32;
-        int64_t int64;
+    test_section("basic values");
+    {
+        struct Struct {
+            uint8_t uint8;
+            uint16_t uint16;
+            uint32_t uint32;
+            uint64_t uint64;
+            int8_t int8;
+            int16_t int16;
+            int32_t int32;
+            int64_t int64;
 
-        void serialize(sbs::Archive& ar)
-        {
-            ar.archive(uint8);
-            ar.archive(uint16);
-            ar.archive(uint32);
-            ar.archive(uint64);
-            ar.archive(int8);
-            ar.archive(int16);
-            ar.archive(int32);
-            ar.archive(int64);
-        }
+            void serialize(sbs::Archive& ar)
+            {
+                ar.archive(uint8);
+                ar.archive(uint16);
+                ar.archive(uint32);
+                ar.archive(uint64);
+                ar.archive(int8);
+                ar.archive(int16);
+                ar.archive(int32);
+                ar.archive(int64);
+            }
 
-        bool operator==(const Struct& other) const
-        {
-            return uint8 == other.uint8 && uint16 == other.uint16 && uint32 == other.uint32 && uint64 == other.uint64
-                && int8 == other.int8 && int16 == other.int16 && int32 == other.int32 && int64 == other.int64;
-        }
-    };
+            bool operator==(const Struct& other) const
+            {
+                return uint8 == other.uint8 && uint16 == other.uint16 && uint32 == other.uint32
+                    && uint64 == other.uint64 && int8 == other.int8 && int16 == other.int16 && int32 == other.int32
+                    && int64 == other.int64;
+            }
+        };
 
-    Struct s_in { .uint8 = 2,
-                  .uint16 = 60000,
-                  .uint32 = 4000000000,
-                  .uint64 = 100000000000000ULL,
-                  .int8 = -2,
-                  .int16 = -30000,
-                  .int32 = -1000000000,
-                  .int64 = -100000000000000LL };
-    std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
-    ASSERT(bytes.size() == 30);
-    Struct s_out { };
-    sbs::deserialize_from_span(bytes, s_out);
-    ASSERT(s_in == s_out);
+        Struct s_in { .uint8 = 2,
+                      .uint16 = 60000,
+                      .uint32 = 4000000000,
+                      .uint64 = 100000000000000ULL,
+                      .int8 = -2,
+                      .int16 = -30000,
+                      .int32 = -1000000000,
+                      .int64 = -100000000000000LL };
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+        ASSERT(bytes.size() == 30);
+        Struct s_out { };
+        sbs::deserialize_from_span(bytes, s_out);
+        ASSERT(s_in == s_out);
+    }
+
+    test_section("min/max values");
+    {
+        struct Struct {
+            uint8_t uint8_min;
+            uint16_t uint16_min;
+            uint32_t uint32_min;
+            uint64_t uint64_min;
+            int8_t int8_min;
+            int16_t int16_min;
+            int32_t int32_min;
+            int64_t int64_min;
+
+            uint8_t uint8_max;
+            uint16_t uint16_max;
+            uint32_t uint32_max;
+            uint64_t uint64_max;
+            int8_t int8_max;
+            int16_t int16_max;
+            int32_t int32_max;
+            int64_t int64_max;
+
+            void serialize(sbs::Archive& ar)
+            {
+                ar.archive(uint8_min);
+                ar.archive(uint16_min);
+                ar.archive(uint32_min);
+                ar.archive(uint64_min);
+                ar.archive(int8_min);
+                ar.archive(int16_min);
+                ar.archive(int32_min);
+                ar.archive(int64_min);
+
+                ar.archive(uint8_max);
+                ar.archive(uint16_max);
+                ar.archive(uint32_max);
+                ar.archive(uint64_max);
+                ar.archive(int8_max);
+                ar.archive(int16_max);
+                ar.archive(int32_max);
+                ar.archive(int64_max);
+            }
+        };
+
+        Struct s_in {
+            .uint8_min = std::numeric_limits<uint8_t>::min(),
+            .uint16_min = std::numeric_limits<uint16_t>::min(),
+            .uint32_min = std::numeric_limits<uint32_t>::min(),
+            .uint64_min = std::numeric_limits<uint64_t>::min(),
+            .int8_min = std::numeric_limits<int8_t>::min(),
+            .int16_min = std::numeric_limits<int16_t>::min(),
+            .int32_min = std::numeric_limits<int32_t>::min(),
+            .int64_min = std::numeric_limits<int64_t>::min(),
+
+            .uint8_max = std::numeric_limits<uint8_t>::max(),
+            .uint16_max = std::numeric_limits<uint16_t>::max(),
+            .uint32_max = std::numeric_limits<uint32_t>::max(),
+            .uint64_max = std::numeric_limits<uint64_t>::max(),
+            .int8_max = std::numeric_limits<int8_t>::max(),
+            .int16_max = std::numeric_limits<int16_t>::max(),
+            .int32_max = std::numeric_limits<int32_t>::max(),
+            .int64_max = std::numeric_limits<int64_t>::max()
+        };
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+        Struct s_out { };
+        sbs::deserialize_from_span(bytes, s_out);
+        ASSERT(s_out.uint8_min == s_in.uint8_min);
+        ASSERT(s_out.uint16_min == s_in.uint16_min);
+        ASSERT(s_out.uint32_min == s_in.uint32_min);
+        ASSERT(s_out.uint64_min == s_in.uint64_min);
+        ASSERT(s_out.int8_min == s_in.int8_min);
+        ASSERT(s_out.int16_min == s_in.int16_min);
+        ASSERT(s_out.int32_min == s_in.int32_min);
+        ASSERT(s_out.int64_min == s_in.int64_min);
+        ASSERT(s_out.uint8_max == s_in.uint8_max);
+        ASSERT(s_out.uint16_max == s_in.uint16_max);
+        ASSERT(s_out.uint32_max == s_in.uint32_max);
+        ASSERT(s_out.uint64_max == s_in.uint64_max);
+        ASSERT(s_out.int8_max == s_in.int8_max);
+        ASSERT(s_out.int16_max == s_in.int16_max);
+        ASSERT(s_out.int32_max == s_in.int32_max);
+        ASSERT(s_out.int64_max == s_in.int64_max);
+    }
 }
 
 inline void serialize_floats()
@@ -227,6 +315,45 @@ inline void serialize_floats()
         Struct s_out { };
         sbs::deserialize_from_span(bytes, s_out);
         ASSERT(s_in == s_out);
+    }
+
+    test_section("special values");
+    {
+        struct SpecialStruct {
+            float quiet_nan;
+            float signaling_nan;
+            float inf;
+            float lowest;
+            float min;
+            float max;
+
+            void serialize(sbs::Archive& ar)
+            {
+                ar.archive(quiet_nan);
+                ar.archive(signaling_nan);
+                ar.archive(inf);
+                ar.archive(lowest);
+                ar.archive(min);
+                ar.archive(max);
+            }
+        };
+
+        SpecialStruct s_in { .quiet_nan = std::numeric_limits<float>::quiet_NaN(),
+                             .signaling_nan = std::numeric_limits<float>::signaling_NaN(),
+                             .inf = std::numeric_limits<float>::infinity(),
+                             .lowest = std::numeric_limits<float>::lowest(),
+                             .min = std::numeric_limits<float>::min(),
+                             .max = std::numeric_limits<float>::max() };
+
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
+        SpecialStruct s_out { };
+        sbs::deserialize_from_span(bytes, s_out);
+        ASSERT(std::isnan(s_out.quiet_nan));
+        ASSERT(std::isnan(s_out.signaling_nan));
+        ASSERT(std::isinf(s_out.inf));
+        ASSERT(s_out.lowest == s_in.lowest);
+        ASSERT(s_out.min == s_in.min);
+        ASSERT(s_out.max == s_in.max);
     }
 }
 
