@@ -26,11 +26,20 @@ inline void serialize_array()
 
     test_section("std::array");
     {
-        std::array<uint8_t, 4> array_in { 10, 20, 30, 40 };
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(array_in);
-        std::array<uint8_t, 4> array_out { };
-        sbs::deserialize_from_span(bytes, array_out);
-        ASSERT(array_in == array_out);
+        {
+            std::array<uint8_t, 4> array_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(array_in);
+            std::array<uint8_t, 4> array_out { 1, 2, 3, 4 };
+            sbs::deserialize_from_span(bytes, array_out);
+            ASSERT(array_in == array_out);
+        }
+        {
+            std::array<uint8_t, 4> array_in { 10, 20, 30, 40 };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(array_in);
+            std::array<uint8_t, 4> array_out { };
+            sbs::deserialize_from_span(bytes, array_out);
+            ASSERT(array_in == array_out);
+        }
     }
 }
 
@@ -40,16 +49,30 @@ inline void serialize_bitset()
 
     test_section("std::bitset");
     {
-        std::bitset<200> bitset_in { };
-        bitset_in.set(5, true);
-        bitset_in.set(10, true);
-        bitset_in.set(100, true);
-        bitset_in.set(150, true);
-        bitset_in.set(198, true);
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(bitset_in);
-        std::bitset<200> bitset_out { };
-        sbs::deserialize_from_span(bytes, bitset_out);
-        ASSERT(bitset_in == bitset_out);
+        {
+            std::bitset<200> bitset_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(bitset_in);
+            std::bitset<200> bitset_out { };
+            bitset_out.set(5, true);
+            bitset_out.set(10, true);
+            bitset_out.set(100, true);
+            bitset_out.set(150, true);
+            bitset_out.set(198, true);
+            sbs::deserialize_from_span(bytes, bitset_out);
+            ASSERT(bitset_in == bitset_out);
+        }
+        {
+            std::bitset<200> bitset_in { };
+            bitset_in.set(5, true);
+            bitset_in.set(10, true);
+            bitset_in.set(100, true);
+            bitset_in.set(150, true);
+            bitset_in.set(198, true);
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(bitset_in);
+            std::bitset<200> bitset_out { };
+            sbs::deserialize_from_span(bytes, bitset_out);
+            ASSERT(bitset_in == bitset_out);
+        }
     }
 }
 
@@ -59,20 +82,38 @@ inline void serialize_chrono()
 
     test_section("std::chrono::duration");
     {
-        std::chrono::duration<double> duration_in { 37 };
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(duration_in);
-        std::chrono::duration<double> duration_out { };
-        sbs::deserialize_from_span(bytes, duration_out);
-        ASSERT(duration_in == duration_out);
+        {
+            std::chrono::duration<double> duration_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(duration_in);
+            std::chrono::duration<double> duration_out { 37 };
+            sbs::deserialize_from_span(bytes, duration_out);
+            ASSERT(duration_in == duration_out);
+        }
+        {
+            std::chrono::duration<double> duration_in { 37 };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(duration_in);
+            std::chrono::duration<double> duration_out { };
+            sbs::deserialize_from_span(bytes, duration_out);
+            ASSERT(duration_in == duration_out);
+        }
     }
 
     test_section("std::chrono::time_point");
     {
-        std::chrono::time_point<std::chrono::steady_clock> time_point_in = std::chrono::steady_clock::now();
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(time_point_in);
-        std::chrono::time_point<std::chrono::steady_clock> time_point_out { };
-        sbs::deserialize_from_span(bytes, time_point_out);
-        ASSERT(time_point_in == time_point_out);
+        {
+            std::chrono::time_point<std::chrono::steady_clock> time_point_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(time_point_in);
+            std::chrono::time_point<std::chrono::steady_clock> time_point_out = std::chrono::steady_clock::now();
+            sbs::deserialize_from_span(bytes, time_point_out);
+            ASSERT(time_point_in == time_point_out);
+        }
+        {
+            std::chrono::time_point<std::chrono::steady_clock> time_point_in = std::chrono::steady_clock::now();
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(time_point_in);
+            std::chrono::time_point<std::chrono::steady_clock> time_point_out { };
+            sbs::deserialize_from_span(bytes, time_point_out);
+            ASSERT(time_point_in == time_point_out);
+        }
     }
 }
 
@@ -82,11 +123,20 @@ inline void serialize_complex()
 
     test_section("std::complex");
     {
-        std::complex complex_in { 2.4f, -3.0f };
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(complex_in);
-        std::complex<float> complex_out { };
-        sbs::deserialize_from_span(bytes, complex_out);
-        ASSERT(complex_in == complex_out);
+        {
+            std::complex<float> complex_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(complex_in);
+            std::complex complex_out { 2.4f, -3.0f };
+            sbs::deserialize_from_span(bytes, complex_out);
+            ASSERT(complex_in == complex_out);
+        }
+        {
+            std::complex complex_in { 2.4f, -3.0f };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(complex_in);
+            std::complex<float> complex_out { };
+            sbs::deserialize_from_span(bytes, complex_out);
+            ASSERT(complex_in == complex_out);
+        }
     }
 }
 
@@ -96,16 +146,30 @@ inline void serialize_deque()
 
     test_section("std::deque");
     {
-        std::deque<uint8_t> deque_in { };
-        deque_in.push_back(5);
-        deque_in.push_back(4);
-        deque_in.push_back(3);
-        deque_in.push_back(2);
-        deque_in.push_back(1);
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(deque_in);
-        std::deque<uint8_t> deque_out { };
-        sbs::deserialize_from_span(bytes, deque_out);
-        ASSERT(deque_in == deque_out);
+        {
+            std::deque<uint8_t> deque_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(deque_in);
+            std::deque<uint8_t> deque_out { };
+            deque_out.push_back(5);
+            deque_out.push_back(4);
+            deque_out.push_back(3);
+            deque_out.push_back(2);
+            deque_out.push_back(1);
+            sbs::deserialize_from_span(bytes, deque_out);
+            ASSERT(deque_in == deque_out);
+        }
+        {
+            std::deque<uint8_t> deque_in { };
+            deque_in.push_back(5);
+            deque_in.push_back(4);
+            deque_in.push_back(3);
+            deque_in.push_back(2);
+            deque_in.push_back(1);
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(deque_in);
+            std::deque<uint8_t> deque_out { };
+            sbs::deserialize_from_span(bytes, deque_out);
+            ASSERT(deque_in == deque_out);
+        }
     }
 }
 
@@ -115,11 +179,20 @@ inline void serialize_filesystem()
 
     test_section("std::filesystem::path");
     {
-        std::filesystem::path path_in { R"(C:\Windows\System32\notepad.exe)" };
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(path_in);
-        std::filesystem::path path_out { };
-        sbs::deserialize_from_span(bytes, path_out);
-        ASSERT(path_in == path_out);
+        {
+            std::filesystem::path path_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(path_in);
+            std::filesystem::path path_out { R"(C:\Windows\System32\notepad.exe)" };
+            sbs::deserialize_from_span(bytes, path_out);
+            ASSERT(path_in == path_out);
+        }
+        {
+            std::filesystem::path path_in { R"(C:\Windows\System32\notepad.exe)" };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(path_in);
+            std::filesystem::path path_out { };
+            sbs::deserialize_from_span(bytes, path_out);
+            ASSERT(path_in == path_out);
+        }
     }
 }
 
@@ -129,14 +202,26 @@ inline void serialize_forward_list()
 
     test_section("std::forward_list");
     {
-        std::forward_list<uint8_t> list_in { };
-        list_in.push_front(3);
-        list_in.push_front(6);
-        list_in.push_front(9);
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(list_in);
-        std::forward_list<uint8_t> list_out { };
-        sbs::deserialize_from_span(bytes, list_out);
-        ASSERT(list_in == list_out);
+        {
+            std::forward_list<uint8_t> list_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(list_in);
+            std::forward_list<uint8_t> list_out { };
+            list_out.push_front(3);
+            list_out.push_front(6);
+            list_out.push_front(9);
+            sbs::deserialize_from_span(bytes, list_out);
+            ASSERT(list_in == list_out);
+        }
+        {
+            std::forward_list<uint8_t> list_in { };
+            list_in.push_front(3);
+            list_in.push_front(6);
+            list_in.push_front(9);
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(list_in);
+            std::forward_list<uint8_t> list_out { };
+            sbs::deserialize_from_span(bytes, list_out);
+            ASSERT(list_in == list_out);
+        }
     }
 }
 
@@ -146,14 +231,26 @@ inline void serialize_list()
 
     test_section("std::list");
     {
-        std::list<uint8_t> list_in { };
-        list_in.push_back(4);
-        list_in.push_back(8);
-        list_in.push_back(12);
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(list_in);
-        std::list<uint8_t> list_out { };
-        sbs::deserialize_from_span(bytes, list_out);
-        ASSERT(list_in == list_out);
+        {
+            std::list<uint8_t> list_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(list_in);
+            std::list<uint8_t> list_out { };
+            list_out.push_back(4);
+            list_out.push_back(8);
+            list_out.push_back(12);
+            sbs::deserialize_from_span(bytes, list_out);
+            ASSERT(list_in == list_out);
+        }
+        {
+            std::list<uint8_t> list_in { };
+            list_in.push_back(4);
+            list_in.push_back(8);
+            list_in.push_back(12);
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(list_in);
+            std::list<uint8_t> list_out { };
+            sbs::deserialize_from_span(bytes, list_out);
+            ASSERT(list_in == list_out);
+        }
     }
 }
 
@@ -163,32 +260,62 @@ inline void serialize_map()
 
     test_section("std::map");
     {
-        std::map<std::string, uint16_t> map_in { };
-        map_in.insert({ "one", 1 });
-        map_in.insert({ "two", 4 });
-        map_in.insert({ "three", 9 });
-        map_in.insert({ "four", 16 });
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(map_in);
-        std::map<std::string, uint16_t> map_out { };
-        sbs::deserialize_from_span(bytes, map_out);
-        ASSERT(map_in == map_out);
+        {
+            std::map<std::string, uint16_t> map_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(map_in);
+            std::map<std::string, uint16_t> map_out { };
+            map_out.insert({ "one", 1 });
+            map_out.insert({ "two", 4 });
+            map_out.insert({ "three", 9 });
+            map_out.insert({ "four", 16 });
+            sbs::deserialize_from_span(bytes, map_out);
+            ASSERT(map_in == map_out);
+        }
+        {
+            std::map<std::string, uint16_t> map_in { };
+            map_in.insert({ "one", 1 });
+            map_in.insert({ "two", 4 });
+            map_in.insert({ "three", 9 });
+            map_in.insert({ "four", 16 });
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(map_in);
+            std::map<std::string, uint16_t> map_out { };
+            sbs::deserialize_from_span(bytes, map_out);
+            ASSERT(map_in == map_out);
+        }
     }
 
     test_section("std::multimap");
     {
-        std::multimap<std::string, uint16_t> multimap_in { };
-        multimap_in.insert({ "one", 1 });
-        multimap_in.insert({ "three", 3 });
-        multimap_in.insert({ "two", 4 });
-        multimap_in.insert({ "one", 1 });
-        multimap_in.insert({ "four", 4 });
-        multimap_in.insert({ "three", 9 });
-        multimap_in.insert({ "two", 2 });
-        multimap_in.insert({ "four", 16 });
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(multimap_in);
-        std::multimap<std::string, uint16_t> multimap_out { };
-        sbs::deserialize_from_span(bytes, multimap_out);
-        ASSERT(multimap_in == multimap_out);
+        {
+            std::multimap<std::string, uint16_t> multimap_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(multimap_in);
+            std::multimap<std::string, uint16_t> multimap_out { };
+            multimap_out.insert({ "one", 1 });
+            multimap_out.insert({ "three", 3 });
+            multimap_out.insert({ "two", 4 });
+            multimap_out.insert({ "one", 1 });
+            multimap_out.insert({ "four", 4 });
+            multimap_out.insert({ "three", 9 });
+            multimap_out.insert({ "two", 2 });
+            multimap_out.insert({ "four", 16 });
+            sbs::deserialize_from_span(bytes, multimap_out);
+            ASSERT(multimap_in == multimap_out);
+        }
+        {
+            std::multimap<std::string, uint16_t> multimap_in { };
+            multimap_in.insert({ "one", 1 });
+            multimap_in.insert({ "three", 3 });
+            multimap_in.insert({ "two", 4 });
+            multimap_in.insert({ "one", 1 });
+            multimap_in.insert({ "four", 4 });
+            multimap_in.insert({ "three", 9 });
+            multimap_in.insert({ "two", 2 });
+            multimap_in.insert({ "four", 16 });
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(multimap_in);
+            std::multimap<std::string, uint16_t> multimap_out { };
+            sbs::deserialize_from_span(bytes, multimap_out);
+            ASSERT(multimap_in == multimap_out);
+        }
     }
 }
 
@@ -198,6 +325,13 @@ inline void serialize_memory()
 
     test_section("std::unique_ptr");
     {
+        {
+            std::unique_ptr<int64_t> ptr_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(ptr_in);
+            auto ptr_out = std::make_unique<int64_t>(1337);
+            sbs::deserialize_from_span(bytes, ptr_out);
+            ASSERT(ptr_in == nullptr && ptr_out == nullptr);
+        }
         {
             auto ptr_in = std::make_unique<int64_t>(1337);
             std::vector<std::byte> bytes = sbs::serialize_to_vector(ptr_in);
@@ -222,6 +356,13 @@ inline void serialize_optional()
     test_section("std::optional");
     {
         {
+            std::optional<uint8_t> opt_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(opt_in);
+            std::optional<uint8_t> opt_out { 8 };
+            sbs::deserialize_from_span(bytes, opt_out);
+            ASSERT(!opt_in.has_value() && !opt_out.has_value());
+        }
+        {
             std::optional<uint8_t> opt_in = 8;
             std::vector<std::byte> bytes = sbs::serialize_to_vector(opt_in);
             std::optional<uint8_t> opt_out { };
@@ -244,30 +385,58 @@ inline void serialize_set()
 
     test_section("std::set");
     {
-        std::set<uint8_t> set_in { };
-        set_in.insert(0);
-        set_in.insert(1);
-        set_in.insert(2);
-        set_in.insert(1);
-        set_in.insert(0);
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
-        std::set<uint8_t> set_out { };
-        sbs::deserialize_from_span(bytes, set_out);
-        ASSERT(set_in == set_out);
+        {
+            std::set<uint8_t> set_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
+            std::set<uint8_t> set_out { };
+            set_out.insert(0);
+            set_out.insert(1);
+            set_out.insert(2);
+            set_out.insert(1);
+            set_out.insert(0);
+            sbs::deserialize_from_span(bytes, set_out);
+            ASSERT(set_in == set_out);
+        }
+        {
+            std::set<uint8_t> set_in { };
+            set_in.insert(0);
+            set_in.insert(1);
+            set_in.insert(2);
+            set_in.insert(1);
+            set_in.insert(0);
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
+            std::set<uint8_t> set_out { };
+            sbs::deserialize_from_span(bytes, set_out);
+            ASSERT(set_in == set_out);
+        }
     }
 
     test_section("std::multiset");
     {
-        std::multiset<uint8_t> set_in { };
-        set_in.insert(0);
-        set_in.insert(1);
-        set_in.insert(2);
-        set_in.insert(1);
-        set_in.insert(0);
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
-        std::multiset<uint8_t> set_out;
-        sbs::deserialize_from_span(bytes, set_out);
-        ASSERT(set_in == set_out);
+        {
+            std::multiset<uint8_t> set_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
+            std::multiset<uint8_t> set_out;
+            set_out.insert(0);
+            set_out.insert(1);
+            set_out.insert(2);
+            set_out.insert(1);
+            set_out.insert(0);
+            sbs::deserialize_from_span(bytes, set_out);
+            ASSERT(set_in == set_out);
+        }
+        {
+            std::multiset<uint8_t> set_in { };
+            set_in.insert(0);
+            set_in.insert(1);
+            set_in.insert(2);
+            set_in.insert(1);
+            set_in.insert(0);
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
+            std::multiset<uint8_t> set_out;
+            sbs::deserialize_from_span(bytes, set_out);
+            ASSERT(set_in == set_out);
+        }
     }
 }
 
@@ -277,38 +446,75 @@ inline void serialize_string()
 
     test_section("std::string");
     {
-        std::string str_in = "Hello World!";
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
-        std::string str_out { };
-        sbs::deserialize_from_span(bytes, str_out);
-        ASSERT(str_in == str_out);
+        {
+            std::string str_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
+            std::string str_out = "Hello World!";
+            sbs::deserialize_from_span(bytes, str_out);
+            ASSERT(str_in == str_out);
+        }
+        {
+            std::string str_in = "Hello World!";
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
+            std::string str_out { };
+            sbs::deserialize_from_span(bytes, str_out);
+            ASSERT(str_in == str_out);
+        }
     }
 
     test_section("std::u8string");
     {
-        std::u8string str_in = u8"Hello 👋 World! 🌎";
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
-        std::u8string str_out { };
-        sbs::deserialize_from_span(bytes, str_out);
-        ASSERT(str_in == str_out);
+        {
+            std::u8string str_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
+            std::u8string str_out = u8"Hello 👋 World! 🌎";
+            sbs::deserialize_from_span(bytes, str_out);
+            ASSERT(str_in == str_out);
+        }
+        {
+            std::u8string str_in = u8"Hello 👋 World! 🌎";
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
+            std::u8string str_out { };
+            sbs::deserialize_from_span(bytes, str_out);
+            ASSERT(str_in == str_out);
+        }
     }
 
     test_section("std::u16string");
     {
-        std::u16string str_in = u"Hello 👋 World! 🌎";
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
-        std::u16string str_out { };
-        sbs::deserialize_from_span(bytes, str_out);
-        ASSERT(str_in == str_out);
+        {
+            std::u16string str_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
+            std::u16string str_out = u"Hello 👋 World! 🌎";
+            sbs::deserialize_from_span(bytes, str_out);
+            ASSERT(str_in == str_out);
+        }
+        {
+            std::u16string str_in = u"Hello 👋 World! 🌎";
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
+            std::u16string str_out { };
+            sbs::deserialize_from_span(bytes, str_out);
+            ASSERT(str_in == str_out);
+        }
     }
 
     test_section("std::u32string");
     {
-        std::u32string str_in = U"Hello 👋 World! 🌎";
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
-        std::u32string str_out { };
-        sbs::deserialize_from_span(bytes, str_out);
-        ASSERT(str_in == str_out);
+        {
+            std::u32string str_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
+            std::u32string str_out = U"Hello 👋 World! 🌎";
+            sbs::deserialize_from_span(bytes, str_out);
+            ASSERT(str_in == str_out);
+        }
+        {
+
+            std::u32string str_in = U"Hello 👋 World! 🌎";
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(str_in);
+            std::u32string str_out { };
+            sbs::deserialize_from_span(bytes, str_out);
+            ASSERT(str_in == str_out);
+        }
     }
 }
 
@@ -318,33 +524,64 @@ inline void serialize_unordered_map()
 
     test_section("std::unordered_map");
     {
-        std::unordered_map<std::string, uint16_t> map_in { };
-        map_in.insert({ "one", 1 });
-        map_in.insert({ "two", 4 });
-        map_in.insert({ "three", 9 });
-        map_in.insert({ "four", 16 });
-        map_in.insert({ "two", 2 });
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(map_in);
-        std::unordered_map<std::string, uint16_t> map_out { };
-        sbs::deserialize_from_span(bytes, map_out);
-        ASSERT(map_in == map_out);
+        {
+            std::unordered_map<std::string, uint16_t> map_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(map_in);
+            std::unordered_map<std::string, uint16_t> map_out { };
+            map_out.insert({ "one", 1 });
+            map_out.insert({ "two", 4 });
+            map_out.insert({ "three", 9 });
+            map_out.insert({ "four", 16 });
+            map_out.insert({ "two", 2 });
+            sbs::deserialize_from_span(bytes, map_out);
+            ASSERT(map_in == map_out);
+        }
+        {
+            std::unordered_map<std::string, uint16_t> map_in { };
+            map_in.insert({ "one", 1 });
+            map_in.insert({ "two", 4 });
+            map_in.insert({ "three", 9 });
+            map_in.insert({ "four", 16 });
+            map_in.insert({ "two", 2 });
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(map_in);
+            std::unordered_map<std::string, uint16_t> map_out { };
+            sbs::deserialize_from_span(bytes, map_out);
+            ASSERT(map_in == map_out);
+        }
     }
 
     test_section("std::unordered_multimap");
     {
-        std::unordered_multimap<std::string, uint16_t> map_in { };
-        map_in.insert({ "one", 1 });
-        map_in.insert({ "three", 3 });
-        map_in.insert({ "two", 4 });
-        map_in.insert({ "one", 1 });
-        map_in.insert({ "four", 4 });
-        map_in.insert({ "three", 9 });
-        map_in.insert({ "two", 2 });
-        map_in.insert({ "four", 16 });
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(map_in);
-        std::unordered_multimap<std::string, uint16_t> map_out { };
-        sbs::deserialize_from_span(bytes, map_out);
-        ASSERT(map_in == map_out);
+        {
+            std::unordered_multimap<std::string, uint16_t> map_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(map_in);
+            std::unordered_multimap<std::string, uint16_t> map_out { };
+            map_out.insert({ "one", 1 });
+            map_out.insert({ "three", 3 });
+            map_out.insert({ "two", 4 });
+            map_out.insert({ "one", 1 });
+            map_out.insert({ "four", 4 });
+            map_out.insert({ "three", 9 });
+            map_out.insert({ "two", 2 });
+            map_out.insert({ "four", 16 });
+            sbs::deserialize_from_span(bytes, map_out);
+            ASSERT(map_in == map_out);
+        }
+        {
+            std::unordered_multimap<std::string, uint16_t> map_in { };
+            map_in.insert({ "one", 1 });
+            map_in.insert({ "three", 3 });
+            map_in.insert({ "two", 4 });
+            map_in.insert({ "one", 1 });
+            map_in.insert({ "four", 4 });
+            map_in.insert({ "three", 9 });
+            map_in.insert({ "two", 2 });
+            map_in.insert({ "four", 16 });
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(map_in);
+            std::unordered_multimap<std::string, uint16_t> map_out { };
+            sbs::deserialize_from_span(bytes, map_out);
+            ASSERT(map_in == map_out);
+        }
     }
 }
 
@@ -354,30 +591,58 @@ inline void serialize_unordered_set()
 
     test_section("std::unordered_set");
     {
-        std::unordered_set<std::string> set_in { };
-        set_in.insert("zero");
-        set_in.insert("one");
-        set_in.insert("two");
-        set_in.insert("one");
-        set_in.insert("zero");
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
-        std::unordered_set<std::string> set_out { };
-        sbs::deserialize_from_span(bytes, set_out);
-        ASSERT(set_in == set_out);
+        {
+            std::unordered_set<std::string> set_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
+            std::unordered_set<std::string> set_out { };
+            set_out.insert("zero");
+            set_out.insert("one");
+            set_out.insert("two");
+            set_out.insert("one");
+            set_out.insert("zero");
+            sbs::deserialize_from_span(bytes, set_out);
+            ASSERT(set_in == set_out);
+        }
+        {
+            std::unordered_set<std::string> set_in { };
+            set_in.insert("zero");
+            set_in.insert("one");
+            set_in.insert("two");
+            set_in.insert("one");
+            set_in.insert("zero");
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
+            std::unordered_set<std::string> set_out { };
+            sbs::deserialize_from_span(bytes, set_out);
+            ASSERT(set_in == set_out);
+        }
     }
 
     test_section("std::unordered_multiset");
     {
-        std::unordered_multiset<uint8_t> set_in { };
-        set_in.insert(0);
-        set_in.insert(1);
-        set_in.insert(2);
-        set_in.insert(1);
-        set_in.insert(0);
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
-        std::unordered_multiset<uint8_t> set_out { };
-        sbs::deserialize_from_span(bytes, set_out);
-        ASSERT(set_in == set_out);
+        {
+            std::unordered_multiset<uint8_t> set_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
+            std::unordered_multiset<uint8_t> set_out { };
+            set_out.insert(0);
+            set_out.insert(1);
+            set_out.insert(2);
+            set_out.insert(1);
+            set_out.insert(0);
+            sbs::deserialize_from_span(bytes, set_out);
+            ASSERT(set_in == set_out);
+        }
+        {
+            std::unordered_multiset<uint8_t> set_in { };
+            set_in.insert(0);
+            set_in.insert(1);
+            set_in.insert(2);
+            set_in.insert(1);
+            set_in.insert(0);
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(set_in);
+            std::unordered_multiset<uint8_t> set_out { };
+            sbs::deserialize_from_span(bytes, set_out);
+            ASSERT(set_in == set_out);
+        }
     }
 }
 
@@ -387,20 +652,38 @@ inline void serialize_utility()
 
     test_section("std::pair");
     {
-        std::pair<uint8_t, std::string> pair_in { 8, "eight" };
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(pair_in);
-        std::pair<uint8_t, std::string> pair_out { };
-        sbs::deserialize_from_span(bytes, pair_out);
-        ASSERT(pair_in == pair_out);
+        {
+            std::pair<uint8_t, std::string> pair_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(pair_in);
+            std::pair<uint8_t, std::string> pair_out { 8, "eight" };
+            sbs::deserialize_from_span(bytes, pair_out);
+            ASSERT(pair_in == pair_out);
+        }
+        {
+            std::pair<uint8_t, std::string> pair_in { 8, "eight" };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(pair_in);
+            std::pair<uint8_t, std::string> pair_out { };
+            sbs::deserialize_from_span(bytes, pair_out);
+            ASSERT(pair_in == pair_out);
+        }
     }
 
     test_section("std::tuple");
     {
-        std::tuple<uint8_t, std::string, double> tuple_in { 7, "seven", 7.0 };
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(tuple_in);
-        std::tuple<uint8_t, std::string, double> tuple_out { };
-        sbs::deserialize_from_span(bytes, tuple_out);
-        ASSERT(tuple_in == tuple_out);
+        {
+            std::tuple<uint8_t, std::string, double> tuple_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(tuple_in);
+            std::tuple<uint8_t, std::string, double> tuple_out { 7, "seven", 7.0 };
+            sbs::deserialize_from_span(bytes, tuple_out);
+            ASSERT(tuple_in == tuple_out);
+        }
+        {
+            std::tuple<uint8_t, std::string, double> tuple_in { 7, "seven", 7.0 };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(tuple_in);
+            std::tuple<uint8_t, std::string, double> tuple_out { };
+            sbs::deserialize_from_span(bytes, tuple_out);
+            ASSERT(tuple_in == tuple_out);
+        }
     }
 }
 
@@ -410,6 +693,13 @@ inline void serialize_variant()
 
     test_section("std::variant");
     {
+        {
+            std::variant<uint8_t, float> variant_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(variant_in);
+            std::variant<uint8_t, float> variant_out = static_cast<uint8_t>(24);
+            sbs::deserialize_from_span(bytes, variant_out);
+            ASSERT(variant_in == variant_out);
+        }
         {
             std::variant<uint8_t, float> variant_in = static_cast<uint8_t>(24);
             std::vector<std::byte> bytes = sbs::serialize_to_vector(variant_in);
@@ -449,14 +739,27 @@ inline void serialize_vector()
 
     test_section("std::vector");
     {
-        std::vector<uint16_t> vector_in { };
-        vector_in.push_back(2);
-        vector_in.push_back(4);
-        vector_in.push_back(6);
-        vector_in.push_back(8);
-        std::vector<std::byte> bytes = sbs::serialize_to_vector(vector_in);
-        std::vector<uint16_t> vector_out { };
-        sbs::deserialize_from_span(bytes, vector_out);
-        ASSERT(vector_in == vector_out);
+        {
+            std::vector<uint16_t> vector_in { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(vector_in);
+            std::vector<uint16_t> vector_out { };
+            vector_out.push_back(2);
+            vector_out.push_back(4);
+            vector_out.push_back(6);
+            vector_out.push_back(8);
+            sbs::deserialize_from_span(bytes, vector_out);
+            ASSERT(vector_in == vector_out);
+        }
+        {
+            std::vector<uint16_t> vector_in { };
+            vector_in.push_back(2);
+            vector_in.push_back(4);
+            vector_in.push_back(6);
+            vector_in.push_back(8);
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(vector_in);
+            std::vector<uint16_t> vector_out { };
+            sbs::deserialize_from_span(bytes, vector_out);
+            ASSERT(vector_in == vector_out);
+        }
     }
 }
