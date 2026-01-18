@@ -43,11 +43,22 @@ struct VariantDefaultSerializer {
     }
 };
 
+struct MonostateSerializer {
+    void operator()(Archive&, std::monostate&) const
+    {
+    }
+};
+
 template <class... Types>
     requires(sbs::DefaultSerializable<Types> && ...)
 void serialize(Archive& ar, std::variant<Types...>& variant)
 {
     VariantDefaultSerializer<Types...>()(ar, variant);
+}
+
+inline void serialize(Archive& ar, std::monostate& monostate)
+{
+    MonostateSerializer()(ar, monostate);
 }
 
 }

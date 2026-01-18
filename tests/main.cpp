@@ -119,6 +119,7 @@ int main()
     serialize_unordered_map();
     serialize_unordered_set();
     serialize_utility();
+    serialize_variant();
 
     SimpleStruct s {
         .a = 1,

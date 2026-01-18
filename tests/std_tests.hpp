@@ -17,6 +17,8 @@
 #include <sbs/serializers/unordered_map.hpp>
 #include <sbs/serializers/unordered_set.hpp>
 #include <sbs/serializers/utility.hpp>
+#include <sbs/serializers/variant.hpp>
+#include <sbs/serializers/vector.hpp>
 
 inline void serialize_array()
 {
@@ -399,5 +401,62 @@ inline void serialize_utility()
         std::tuple<uint8_t, std::string, double> tuple_out { };
         sbs::deserialize_from_span(bytes, tuple_out);
         ASSERT(tuple_in == tuple_out);
+    }
+}
+
+inline void serialize_variant()
+{
+    test_case("serialize <variant>");
+
+    test_section("std::variant");
+    {
+        {
+            std::variant<uint8_t, float> variant_in = static_cast<uint8_t>(24);
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(variant_in);
+            std::variant<uint8_t, float> variant_out { };
+            sbs::deserialize_from_span(bytes, variant_out);
+            ASSERT(variant_in == variant_out);
+        }
+        {
+            std::variant<uint8_t, float> variant_in = 25.5f;
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(variant_in);
+            std::variant<uint8_t, float> variant_out { };
+            sbs::deserialize_from_span(bytes, variant_out);
+            ASSERT(variant_in == variant_out);
+        }
+        {
+            std::variant<uint8_t, float, std::monostate> variant_in = std::monostate { };
+            std::vector<std::byte> bytes = sbs::serialize_to_vector(variant_in);
+            std::variant<uint8_t, float, std::monostate> variant_out { };
+            sbs::deserialize_from_span(bytes, variant_out);
+            ASSERT(variant_in == variant_out);
+        }
+    }
+
+    test_section("std::monostate");
+    {
+        std::monostate mono_in { };
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(mono_in);
+        std::monostate mono_out { };
+        sbs::deserialize_from_span(bytes, mono_out);
+        ASSERT(mono_in == mono_out);
+    }
+}
+
+inline void serialize_vector()
+{
+    test_case("serialize <vector>");
+
+    test_section("std::vector");
+    {
+        std::vector<uint16_t> vector_in { };
+        vector_in.push_back(2);
+        vector_in.push_back(4);
+        vector_in.push_back(6);
+        vector_in.push_back(8);
+        std::vector<std::byte> bytes = sbs::serialize_to_vector(vector_in);
+        std::vector<uint16_t> vector_out { };
+        sbs::deserialize_from_span(bytes, vector_out);
+        ASSERT(vector_in == vector_out);
     }
 }
