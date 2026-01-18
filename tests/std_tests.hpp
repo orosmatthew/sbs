@@ -101,16 +101,16 @@ inline void serialize_chrono()
     test_section("std::chrono::time_point");
     {
         {
-            std::chrono::time_point<std::chrono::steady_clock> time_point_in { };
+            std::chrono::time_point<std::chrono::system_clock> time_point_in { };
             std::vector<std::byte> bytes = sbs::serialize_to_vector(time_point_in);
-            std::chrono::time_point<std::chrono::steady_clock> time_point_out = std::chrono::steady_clock::now();
+            std::chrono::time_point<std::chrono::system_clock> time_point_out = std::chrono::system_clock::now();
             sbs::deserialize_from_span(bytes, time_point_out);
             ASSERT(time_point_in == time_point_out);
         }
         {
-            std::chrono::time_point<std::chrono::steady_clock> time_point_in = std::chrono::steady_clock::now();
+            std::chrono::time_point<std::chrono::system_clock> time_point_in = std::chrono::system_clock::now();
             std::vector<std::byte> bytes = sbs::serialize_to_vector(time_point_in);
-            std::chrono::time_point<std::chrono::steady_clock> time_point_out { };
+            std::chrono::time_point<std::chrono::system_clock> time_point_out { };
             sbs::deserialize_from_span(bytes, time_point_out);
             ASSERT(time_point_in == time_point_out);
         }
