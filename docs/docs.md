@@ -69,7 +69,7 @@ The `sbs::ValueSerializable` concept allows a type to be directly bitwise copied
 
 `sbs::FloatSerializable` applies to floating-point values that are represented as IEC 559 (IEEE 754).
 
-These types are built-in to the `sbs::Archive` class which is responsible for statically dispatching how to serialize a given type.
+Serialization for these types are handled internally by the `sbs::Archive::archive_value` method requiring no user-defined logic.
 
 ### Object Serializable
 
@@ -102,22 +102,22 @@ An example serializer and usage:
 ```c++
 #include <sbs/sbs.hpp>
 
-struct User {
+struct Player {
     uint32_t id;
     float score;
 };
 
-struct UserSerializer {
+struct PlayerSerializer {
     void operator()(sbs::Archive& ar, User& user) const {
         ar.archive(user.id);
-        ar.archive(score.id);
+        ar.archive(user.score);
     }
 };
 
 int main() {
-    User my_user { .id = 37, .score = 95.5f };
+    Player my_player { .id = 37, .score = 95.5f };
     std::vector<std::byte> bytes = sbs::serialize_to_vector<UserSerializer>(my_user);
-    // `sbs::serialize_to_vector(my_user)` would fail because `User` is not
+    // `sbs::serialize_to_vector(my_player)` would fail because `Player` is not
     // default serializable and so a serializer must be explicitely passed.
 }
 ```
