@@ -212,9 +212,15 @@ template <class Type, class TypeSerializer = DefaultSerializer<Type>>
 void serialize_to_file(const std::filesystem::path& path, Type& value, std::endian endian = std::endian::little)
 {
     std::ofstream file { path, std::ios::binary };
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open file: " + path.string());
+    }
     auto ar = Archive::create_serialize(
-        [&file](const std::span<const std::byte> bytes) {
+        [&path, &file](const std::span<const std::byte> bytes) {
             file.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
+            if (file.bad()) {
+                throw std::runtime_error("Error writing to file: " + path.string());
+            }
         },
         endian);
     ar.template archive<TypeSerializer>(value);
