@@ -165,7 +165,7 @@ struct DefaultSerializer {
     }
 };
 
-template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+template <class TypeSerializer, class Type>
     requires(Serializer<TypeSerializer, Type>)
 void serialize_using_callback(Type& value, WriteCallback write_callback, const std::endian endian = std::endian::little)
 {
@@ -173,7 +173,14 @@ void serialize_using_callback(Type& value, WriteCallback write_callback, const s
     ar.archive<TypeSerializer>(value);
 }
 
-template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+template <class Type>
+    requires(DefaultSerializable<Type>)
+void serialize_using_callback(Type& value, WriteCallback write_callback, const std::endian endian = std::endian::little)
+{
+    serialize_using_callback<DefaultSerializer<Type>>(value, std::move(write_callback), endian);
+}
+
+template <class TypeSerializer, class Type>
     requires(Serializer<TypeSerializer, Type>)
 void deserialize_using_callback(Type& value, ReadCallback read_callback, const std::endian endian = std::endian::little)
 {
@@ -181,7 +188,14 @@ void deserialize_using_callback(Type& value, ReadCallback read_callback, const s
     ar.archive<TypeSerializer>(value);
 }
 
-template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+template <class Type>
+    requires(DefaultSerializable<Type>)
+void deserialize_using_callback(Type& value, ReadCallback read_callback, const std::endian endian = std::endian::little)
+{
+    deserialize_using_callback<DefaultSerializer<Type>>(value, std::move(read_callback), endian);
+}
+
+template <class TypeSerializer, class Type>
     requires(Serializer<TypeSerializer, Type>)
 std::vector<std::byte> serialize_to_vector(Type& value, std::endian endian = std::endian::little)
 {
@@ -193,7 +207,14 @@ std::vector<std::byte> serialize_to_vector(Type& value, std::endian endian = std
     return result;
 }
 
-template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+template <class Type>
+    requires(DefaultSerializable<Type>)
+std::vector<std::byte> serialize_to_vector(Type& value, std::endian endian = std::endian::little)
+{
+    return serialize_to_vector<DefaultSerializer<Type>>(value, endian);
+}
+
+template <class TypeSerializer, class Type>
     requires(Serializer<TypeSerializer, Type>)
 void deserialize_from_span(std::span<const std::byte> bytes, Type& value, std::endian endian = std::endian::little)
 {
@@ -210,7 +231,14 @@ void deserialize_from_span(std::span<const std::byte> bytes, Type& value, std::e
     ar.template archive<TypeSerializer>(value);
 }
 
-template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+template <class Type>
+    requires(DefaultSerializable<Type>)
+void deserialize_from_span(std::span<const std::byte> bytes, Type& value, std::endian endian = std::endian::little)
+{
+    deserialize_from_span<DefaultSerializer<Type>>(bytes, value, endian);
+}
+
+template <class TypeSerializer, class Type>
     requires(Serializer<TypeSerializer, Type>)
 void serialize_to_file(const std::filesystem::path& path, Type& value, std::endian endian = std::endian::little)
 {
@@ -229,7 +257,14 @@ void serialize_to_file(const std::filesystem::path& path, Type& value, std::endi
     ar.template archive<TypeSerializer>(value);
 }
 
-template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+template <class Type>
+    requires(DefaultSerializable<Type>)
+void serialize_to_file(const std::filesystem::path& path, Type& value, std::endian endian = std::endian::little)
+{
+    serialize_to_file<DefaultSerializer<Type>>(path, value, endian);
+}
+
+template <class TypeSerializer, class Type>
     requires(Serializer<TypeSerializer, Type>)
 void deserialize_from_file(const std::filesystem::path& path, Type& value, std::endian endian = std::endian::little)
 {
@@ -252,6 +287,13 @@ void deserialize_from_file(const std::filesystem::path& path, Type& value, std::
         },
         endian);
     ar.template archive<TypeSerializer>(value);
+}
+
+template <class Type>
+    requires(DefaultSerializable<Type>)
+void deserialize_from_file(const std::filesystem::path& path, Type& value, std::endian endian = std::endian::little)
+{
+    deserialize_from_file<DefaultSerializer<Type>>(path, value, endian);
 }
 
 }
