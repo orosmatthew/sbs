@@ -23,7 +23,7 @@
 #include <sbs/serializers/variant.hpp>
 #include <sbs/serializers/vector.hpp>
 
-#include "test.hpp"
+#include "test_helper.hpp"
 
 struct SimpleStruct {
     uint8_t a;
@@ -96,6 +96,10 @@ struct SimpleStruct {
 
 int main()
 {
+#ifdef SBS_WRITE_TEST_FILES
+    clean_test_files();
+#endif
+
     test_endianness();
     serialize_ints();
     serialize_chars();

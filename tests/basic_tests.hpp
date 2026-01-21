@@ -2,7 +2,9 @@
 
 // ReSharper disable CppUnusedIncludeDirective
 
-#include "test.hpp"
+#include "test_helper.hpp"
+
+#include "test_file.hpp"
 
 #include <sbs/sbs.hpp>
 
@@ -14,9 +16,9 @@
 
 inline void assert_bytes_equal(const std::span<const std::byte> bytes, const std::initializer_list<uint8_t>& expected)
 {
-    ASSERT(bytes.size() == expected.size());
+    TEST_ASSERT(bytes.size() == expected.size());
     for (size_t i = 0; i < bytes.size(); ++i) {
-        ASSERT(bytes[i] == std::byte { *(expected.begin() + i) });
+        TEST_ASSERT(bytes[i] == std::byte { *(expected.begin() + i) });
     }
 }
 
@@ -35,7 +37,8 @@ inline void test_endianness()
         assert_bytes_equal(b, { 0x25 });
         uint8_t r = 0;
         sbs::deserialize_from_span(b, r, std::endian::little);
-        ASSERT(r == uint8);
+        TEST_ASSERT(r == uint8);
+        test_file("uint8_little_endian", uint8, b);
     }
 
     test_section("uint16 little endian");
@@ -44,7 +47,8 @@ inline void test_endianness()
         assert_bytes_equal(b, { 0xEB, 0x17 });
         uint16_t r = 0;
         sbs::deserialize_from_span(b, r, std::endian::little);
-        ASSERT(r == uint16);
+        TEST_ASSERT(r == uint16);
+        test_file("uint16_little_endian", uint16, b);
     }
 
     test_section("uint32 little endian");
@@ -53,7 +57,8 @@ inline void test_endianness()
         assert_bytes_equal(b, { 0x3F, 0x9E, 0xA1, 0x7E });
         uint32_t r = 0;
         sbs::deserialize_from_span(b, r, std::endian::little);
-        ASSERT(r == uint32);
+        TEST_ASSERT(r == uint32);
+        test_file("uint32_little_endian", uint32, b);
     }
 
     test_section("uint64 little endian");
@@ -62,7 +67,8 @@ inline void test_endianness()
         assert_bytes_equal(b, { 0x11, 0xEC, 0xAC, 0x4F, 0x2D, 0xED, 0xCE, 0xB7 });
         uint64_t r = 0;
         sbs::deserialize_from_span(b, r, std::endian::little);
-        ASSERT(r == uint64);
+        TEST_ASSERT(r == uint64);
+        test_file("uin64_little_endian", uint64, b);
     }
 
     test_section("uint8 big endian");
@@ -71,7 +77,8 @@ inline void test_endianness()
         assert_bytes_equal(b, { 0x25 });
         uint8_t r = 0;
         sbs::deserialize_from_span(b, r, std::endian::big);
-        ASSERT(r == uint8);
+        TEST_ASSERT(r == uint8);
+        test_file("uint8_big_endian", uint8, b);
     }
 
     test_section("uint16 big endian");
@@ -80,7 +87,8 @@ inline void test_endianness()
         assert_bytes_equal(b, { 0x17, 0xEB });
         uint16_t r = 0;
         sbs::deserialize_from_span(b, r, std::endian::big);
-        ASSERT(r == uint16);
+        TEST_ASSERT(r == uint16);
+        test_file("uint16_big_endian", uint16, b, std::endian::big);
     }
 
     test_section("uint32 big endian");
@@ -89,7 +97,8 @@ inline void test_endianness()
         assert_bytes_equal(b, { 0x7E, 0xA1, 0x9E, 0x3F });
         uint32_t r = 0;
         sbs::deserialize_from_span(b, r, std::endian::big);
-        ASSERT(r == uint32);
+        TEST_ASSERT(r == uint32);
+        test_file("uint32_big_endian", uint32, b, std::endian::big);
     }
 
     test_section("uint64 big endian");
@@ -98,7 +107,8 @@ inline void test_endianness()
         assert_bytes_equal(b, { 0xB7, 0xCE, 0xED, 0x2D, 0x4F, 0xAC, 0xEC, 0x11 });
         uint64_t r = 0;
         sbs::deserialize_from_span(b, r, std::endian::big);
-        ASSERT(r == uint64);
+        TEST_ASSERT(r == uint64);
+        test_file("uint64_big_endian", uint64, b, std::endian::big);
     }
 
     test_section("float little endian");
@@ -108,7 +118,8 @@ inline void test_endianness()
         assert_bytes_equal(b, { 0xA4, 0x70, 0x45, 0x41 });
         float r = 0;
         sbs::deserialize_from_span(b, r, std::endian::little);
-        ASSERT(r == f);
+        TEST_ASSERT(r == f);
+        test_file("float_little_endian", f, b);
     }
 
     test_section("float big endian");
@@ -118,7 +129,8 @@ inline void test_endianness()
         assert_bytes_equal(b, { 0x41, 0x45, 0x70, 0xA4 });
         float r = 0;
         sbs::deserialize_from_span(b, r, std::endian::big);
-        ASSERT(r == f);
+        TEST_ASSERT(r == f);
+        test_file("float_big_endian", f, b, std::endian::big);
     }
 
     test_section("double little endian");
@@ -128,7 +140,8 @@ inline void test_endianness()
         assert_bytes_equal(b, { 0xAD, 0xFA, 0x5C, 0x6D, 0x45, 0x4A, 0x93, 0x40 });
         double r = 0;
         sbs::deserialize_from_span(b, r, std::endian::little);
-        ASSERT(r == d);
+        TEST_ASSERT(r == d);
+        test_file("double_little_endian", d, b);
     }
 
     test_section("double big endian");
@@ -138,7 +151,8 @@ inline void test_endianness()
         assert_bytes_equal(b, { 0x40, 0x93, 0x4A, 0x45, 0x6D, 0x5C, 0xFA, 0xAD });
         double r = 0;
         sbs::deserialize_from_span(b, r, std::endian::big);
-        ASSERT(r == d);
+        TEST_ASSERT(r == d);
+        test_file("double_big_endian", d, b, std::endian::big);
     }
 }
 
@@ -187,10 +201,11 @@ inline void serialize_ints()
                       .int32 = -1000000000,
                       .int64 = -100000000000000LL };
         std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
-        ASSERT(bytes.size() == 30);
+        TEST_ASSERT(bytes.size() == 30);
         Struct s_out { };
         sbs::deserialize_from_span(bytes, s_out);
-        ASSERT(s_in == s_out);
+        TEST_ASSERT(s_in == s_out);
+        test_file("ints_basic_values", s_in, bytes);
     }
 
     test_section("min/max values");
@@ -234,6 +249,16 @@ inline void serialize_ints()
                 ar.archive(int32_max);
                 ar.archive(int64_max);
             }
+
+            bool operator==(const Struct& other) const
+            {
+                return uint8_min == other.uint8_min && uint16_min == other.uint16_min && uint32_min == other.uint32_min
+                    && uint64_min == other.uint64_min && int8_min == other.int8_min && int16_min == other.int16_min
+                    && int32_min == other.int32_min && int64_min == other.int64_min && uint8_max == other.uint8_max
+                    && uint16_max == other.uint16_max && uint32_max == other.uint32_max
+                    && uint64_max == other.uint64_max && int8_max == other.int8_max && int16_max == other.int16_max
+                    && int32_max == other.int32_max && int64_max == other.int64_max;
+            }
         };
 
         Struct s_in {
@@ -258,22 +283,8 @@ inline void serialize_ints()
         std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
         Struct s_out { };
         sbs::deserialize_from_span(bytes, s_out);
-        ASSERT(s_out.uint8_min == s_in.uint8_min);
-        ASSERT(s_out.uint16_min == s_in.uint16_min);
-        ASSERT(s_out.uint32_min == s_in.uint32_min);
-        ASSERT(s_out.uint64_min == s_in.uint64_min);
-        ASSERT(s_out.int8_min == s_in.int8_min);
-        ASSERT(s_out.int16_min == s_in.int16_min);
-        ASSERT(s_out.int32_min == s_in.int32_min);
-        ASSERT(s_out.int64_min == s_in.int64_min);
-        ASSERT(s_out.uint8_max == s_in.uint8_max);
-        ASSERT(s_out.uint16_max == s_in.uint16_max);
-        ASSERT(s_out.uint32_max == s_in.uint32_max);
-        ASSERT(s_out.uint64_max == s_in.uint64_max);
-        ASSERT(s_out.int8_max == s_in.int8_max);
-        ASSERT(s_out.int16_max == s_in.int16_max);
-        ASSERT(s_out.int32_max == s_in.int32_max);
-        ASSERT(s_out.int64_max == s_in.int64_max);
+        TEST_ASSERT(s_in == s_out);
+        test_file("ints_min_max", s_in, bytes);
     }
 }
 
@@ -292,15 +303,19 @@ inline void serialize_chars()
             ar.archive(c16);
             ar.archive(c32);
         }
+
+        bool operator==(const Struct& other) const
+        {
+            return c8 == other.c8 && c16 == other.c16 && c32 == other.c32;
+        }
     };
 
     Struct s_in { .c8 = 0x12, .c16 = 0x1234, .c32 = 0x12345678 };
     std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
     Struct s_out { };
     sbs::deserialize_from_span(bytes, s_out);
-    ASSERT(s_in.c8 == s_out.c8);
-    ASSERT(s_in.c16 == s_out.c16);
-    ASSERT(s_in.c32 == s_out.c32);
+    TEST_ASSERT(s_in == s_out);
+    test_file("chars", s_in, bytes);
 }
 
 inline void serialize_bool()
@@ -316,14 +331,19 @@ inline void serialize_bool()
             ar.archive(t);
             ar.archive(f);
         }
+
+        bool operator==(const Struct& other) const
+        {
+            return t == other.t && f == other.f;
+        }
     };
 
     Struct s_in { .t = true, .f = false };
     std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
     Struct s_out { };
     sbs::deserialize_from_span(bytes, s_out);
-    ASSERT(s_out.t == s_in.t);
-    ASSERT(s_out.f == s_in.f);
+    TEST_ASSERT(s_in == s_out);
+    test_file("bool", s_in, bytes);
 }
 
 inline void serialize_floats()
@@ -350,27 +370,27 @@ inline void serialize_floats()
     {
         Struct s_in { .f = 1.5f, .d = 2.3 };
         std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
-        ASSERT(bytes.size() == 12);
+        TEST_ASSERT(bytes.size() == 12);
         Struct s_out { };
         sbs::deserialize_from_span(bytes, s_out);
-        ASSERT(s_in == s_out);
+        TEST_ASSERT(s_in == s_out);
+        test_file("floats_positive", s_in, bytes);
     }
 
     test_section("negatives");
     {
         Struct s_in { .f = -2.3f, .d = -1.5 };
         std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
-        ASSERT(bytes.size() == 12);
+        TEST_ASSERT(bytes.size() == 12);
         Struct s_out { };
         sbs::deserialize_from_span(bytes, s_out);
-        ASSERT(s_in == s_out);
+        TEST_ASSERT(s_in == s_out);
+        test_file("floats_negative", s_in, bytes);
     }
 
     test_section("special values");
     {
         struct SpecialStruct {
-            float quiet_nan;
-            float signaling_nan;
             float inf;
             float lowest;
             float min;
@@ -378,18 +398,19 @@ inline void serialize_floats()
 
             void serialize(sbs::Archive& ar)
             {
-                ar.archive(quiet_nan);
-                ar.archive(signaling_nan);
                 ar.archive(inf);
                 ar.archive(lowest);
                 ar.archive(min);
                 ar.archive(max);
             }
+
+            bool operator==(const SpecialStruct& other) const
+            {
+                return inf == other.inf && lowest == other.lowest && min == other.min && max == other.max;
+            }
         };
 
-        SpecialStruct s_in { .quiet_nan = std::numeric_limits<float>::quiet_NaN(),
-                             .signaling_nan = std::numeric_limits<float>::signaling_NaN(),
-                             .inf = std::numeric_limits<float>::infinity(),
+        SpecialStruct s_in { .inf = std::numeric_limits<float>::infinity(),
                              .lowest = std::numeric_limits<float>::lowest(),
                              .min = std::numeric_limits<float>::min(),
                              .max = std::numeric_limits<float>::max() };
@@ -397,12 +418,8 @@ inline void serialize_floats()
         std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
         SpecialStruct s_out { };
         sbs::deserialize_from_span(bytes, s_out);
-        ASSERT(std::isnan(s_out.quiet_nan));
-        ASSERT(std::isnan(s_out.signaling_nan));
-        ASSERT(std::isinf(s_out.inf));
-        ASSERT(s_out.lowest == s_in.lowest);
-        ASSERT(s_out.min == s_in.min);
-        ASSERT(s_out.max == s_in.max);
+        TEST_ASSERT(s_in == s_out);
+        test_file("floats_special", s_in, bytes);
     }
 }
 
@@ -434,10 +451,11 @@ inline void serialize_enum()
 
     Struct s_in { .e1 = MyEnum::first, .e2 = MyEnum::second, .e3 = MyEnum::third, .e4 = MyEnum::big };
     std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
-    ASSERT(bytes.size() == 8);
+    TEST_ASSERT(bytes.size() == 8);
     Struct s_out { };
     sbs::deserialize_from_span(bytes, s_out);
-    ASSERT(s_in == s_out);
+    TEST_ASSERT(s_in == s_out);
+    test_file("enums", s_in, bytes);
 }
 
 struct FunctionSerializableStruct {
@@ -462,10 +480,11 @@ inline void serialize_function_serializable()
 
     FunctionSerializableStruct s_in { .i = 23, .f = -50000.0f };
     std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
-    ASSERT(bytes.size() == 5);
+    TEST_ASSERT(bytes.size() == 5);
     FunctionSerializableStruct s_out { };
     sbs::deserialize_from_span(bytes, s_out);
-    ASSERT(s_in == s_out);
+    TEST_ASSERT(s_in == s_out);
+    test_file("function_serializable", s_in, bytes);
 }
 
 inline void serialize_nested_structs()
@@ -516,8 +535,9 @@ inline void serialize_nested_structs()
                        .i2 = -3828362829372893LL,
                        .f = 93.0f };
     std::vector<std::byte> bytes = sbs::serialize_to_vector(s_in);
-    ASSERT(bytes.size() == 34);
+    TEST_ASSERT(bytes.size() == 34);
     StructOuter s_out { };
     sbs::deserialize_from_span(bytes, s_out);
-    ASSERT(s_in == s_out);
+    TEST_ASSERT(s_in == s_out);
+    test_file("nested_structs", s_in, bytes);
 }

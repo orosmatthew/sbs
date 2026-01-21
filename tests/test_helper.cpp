@@ -1,4 +1,4 @@
-#include "test.hpp"
+#include "test_helper.hpp"
 
 #include <optional>
 #include <string>
@@ -13,9 +13,19 @@ void test_case(const std::string& name)
     g_test_section = std::nullopt;
 }
 
+const std::optional<std::string>& test_case()
+{
+    return g_test_case;
+}
+
 void test_section(const std::string& name)
 {
     g_test_section = name;
+}
+
+const std::optional<std::string>& test_section()
+{
+    return g_test_section;
 }
 
 void test_failed(const char* file, const int line)
