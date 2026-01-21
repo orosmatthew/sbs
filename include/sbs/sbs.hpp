@@ -9,6 +9,7 @@
 #include <limits>
 #include <ranges>
 #include <span>
+#include <stdexcept>
 #include <vector>
 
 namespace sbs {
@@ -78,6 +79,9 @@ public:
             }
         } else {
             std::span<const std::byte> source = m_read_callback(sizeof(Value));
+            if (source.size() < sizeof(Value)) {
+                throw std::runtime_error("Read callback returned insufficient data");
+            }
             std::span<std::byte> dest = std::as_writable_bytes(std::span<Value>(&value, 1));
             if (m_endian == std::endian::native) {
                 std::ranges::copy(source, dest.begin());
