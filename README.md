@@ -31,7 +31,7 @@ struct User {
     std::string username;
     float score;
     
-    // Member function approach
+    // Member approach
     void serialize(sbs::Archive& ar) {
         ar.archive(id);
         ar.archive(username);
@@ -39,7 +39,7 @@ struct User {
     }
 };
 
-/* function approach
+/* Function approach
 void serialize(sbs::Archive& ar, User user) {
     ar.archive(user.id);
     ar.archive(user.username);
