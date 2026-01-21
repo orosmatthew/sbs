@@ -199,6 +199,9 @@ void deserialize_from_span(std::span<const std::byte> bytes, Type& value, std::e
 {
     auto ar = Archive::create_deserialize(
         [&bytes](const size_t size) {
+            if (bytes.size() < size) {
+                throw std::runtime_error("Insufficient data to deserialize");
+            }
             std::span<const std::byte> subspan = bytes.subspan(0, size);
             bytes = bytes.subspan(size, bytes.size() - size);
             return subspan;
