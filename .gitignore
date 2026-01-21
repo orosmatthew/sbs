@@ -1,3 +1,5 @@
 cmake-build*/
 build/
 .idea/
+tests/temp
+!tests/temp/.gitkeep

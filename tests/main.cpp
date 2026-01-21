@@ -17,6 +17,7 @@ int main()
     serialize_enum();
     serialize_function_serializable();
     serialize_nested_structs();
+    serialize_using_file();
 
     serialize_array();
     serialize_bitset();

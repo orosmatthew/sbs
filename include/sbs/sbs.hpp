@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <bit>
 #include <cstddef>
+#include <filesystem>
+#include <fstream>
 #include <functional>
 #include <limits>
 #include <ranges>
@@ -204,4 +206,43 @@ void deserialize_from_span(std::span<const std::byte> bytes, Type& value, std::e
         endian);
     ar.template archive<TypeSerializer>(value);
 }
+
+template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+    requires(Serializer<TypeSerializer, Type>)
+void serialize_to_file(const std::filesystem::path& path, Type& value, std::endian endian = std::endian::little)
+{
+    std::ofstream file { path, std::ios::binary };
+    auto ar = Archive::create_serialize(
+        [&file](const std::span<const std::byte> bytes) {
+            file.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
+        },
+        endian);
+    ar.template archive<TypeSerializer>(value);
+}
+
+template <class Type, class TypeSerializer = DefaultSerializer<Type>>
+    requires(Serializer<TypeSerializer, Type>)
+void deserialize_from_file(const std::filesystem::path& path, Type& value, std::endian endian = std::endian::little)
+{
+    std::ifstream file { path, std::ios::binary };
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open file: " + path.string());
+    }
+    std::vector<std::byte> buffer;
+    auto ar = Archive::create_deserialize(
+        [&path, &file, &buffer](const size_t size) {
+            if (buffer.size() < size) {
+                buffer.resize(size);
+            }
+            file.read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamsize>(size));
+            if (file.bad()) {
+                throw std::runtime_error("Error reading file: " + path.string());
+            }
+            const std::streamsize bytes_read = file.gcount();
+            return std::span<const std::byte>(buffer.data(), bytes_read);
+        },
+        endian);
+    ar.template archive<TypeSerializer>(value);
+}
+
 }

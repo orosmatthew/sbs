@@ -8,6 +8,9 @@
 
 #include <sbs/sbs.hpp>
 
+#include <sbs/serializers/string.hpp>
+#include <sbs/serializers/vector.hpp>
+
 #include <array>
 #include <bit>
 #include <cmath>
@@ -540,4 +543,46 @@ inline void serialize_nested_structs()
     sbs::deserialize_from_span(bytes, s_out);
     TEST_ASSERT(s_in == s_out);
     test_file("nested_structs", s_in, bytes);
+}
+
+inline void serialize_using_file()
+{
+    test_case("serialize using file");
+
+    struct Struct {
+        uint8_t uint8;
+        float f;
+        std::string str;
+        std::vector<int32_t> numbers;
+
+        void serialize(sbs::Archive& ar)
+        {
+            ar.archive(uint8);
+            ar.archive(f);
+            ar.archive(str);
+            ar.archive(numbers);
+        }
+
+        bool operator==(const Struct& other) const
+        {
+            return uint8 == other.uint8 && f == other.f && str == other.str && numbers == other.numbers;
+        }
+    };
+
+    const std::filesystem::path path = "tests/temp/file.bin";
+    Struct s_in { .uint8 = 37, .f = 12.25f, .str = "Hello World!", .numbers = { -8, -6, -4, -2, 0, 2, 4, 6, 8 } };
+
+    test_section("serialize_to_file");
+    {
+        sbs::serialize_to_file(path, s_in);
+    }
+
+    test_section("deserialize_from_file");
+    {
+        Struct s_out { };
+        sbs::deserialize_from_file(path, s_out);
+        TEST_ASSERT(s_in == s_out);
+    }
+
+    std::filesystem::remove(path);
 }
