@@ -14,8 +14,8 @@ struct ChronoDurationSerializer {
     void operator()(Archive& ar, std::chrono::duration<Tick, Period>& duration) const
     {
         if (ar.serializing()) {
-            const Tick ticks = duration.count();
-            ar.archive_copy<TickSerializer>(ticks);
+            Tick ticks = duration.count();
+            ar.archive<TickSerializer>(ticks);
         } else {
             auto ticks = Tick();
             ar.archive<TickSerializer>(ticks);
@@ -35,8 +35,8 @@ struct ChronoTimePointSerializer {
     void operator()(Archive& ar, std::chrono::time_point<Clock>& time_point) const
     {
         if (ar.serializing()) {
-            const Duration duration = std::chrono::duration_cast<Duration>(time_point.time_since_epoch());
-            ar.archive_copy<DurationSerializer>(duration);
+            Duration duration = std::chrono::duration_cast<Duration>(time_point.time_since_epoch());
+            ar.archive<DurationSerializer>(duration);
         } else {
             auto duration = Duration();
             ar.archive<DurationSerializer>(duration);

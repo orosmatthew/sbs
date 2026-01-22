@@ -60,12 +60,12 @@ struct DefaultSerializer;
 
 class Archive {
 public:
-    static Archive create_serialize(WriteCallback write_callback, const std::endian endian)
+    static Archive create_for_serializing(WriteCallback write_callback, const std::endian endian)
     {
         return Archive(std::move(write_callback), endian);
     }
 
-    static Archive create_deserialize(ReadCallback read_callback, const std::endian endian)
+    static Archive create_for_deserializing(ReadCallback read_callback, const std::endian endian)
     {
         return Archive(std::move(read_callback), endian);
     }
@@ -98,33 +98,17 @@ public:
     }
 
     template <class Type>
-        requires(DefaultSerializable<Type>)
+        requires(DefaultSerializable<Type> && !std::is_const_v<std::remove_reference_t<Type>>)
     void archive(Type& value)
     {
         DefaultSerializer<Type>()(*this, value);
     }
 
     template <class SerializeType, class Type>
-        requires(Serializer<SerializeType, Type>)
+        requires(Serializer<SerializeType, Type> && !std::is_const_v<std::remove_reference_t<Type>>)
     void archive(Type& value)
     {
         SerializeType()(*this, value);
-    }
-
-    template <class Type>
-        requires(DefaultSerializable<Type> && std::copyable<Type>)
-    void archive_copy(const Type& value)
-    {
-        Type copy = value;
-        DefaultSerializer<Type>()(*this, copy);
-    }
-
-    template <class SerializeType, class Type>
-        requires(Serializer<SerializeType, Type> && std::copyable<Type>)
-    void archive_copy(const Type& value)
-    {
-        Type copy = value;
-        SerializeType()(*this, copy);
     }
 
     [[nodiscard]] bool serializing() const
@@ -179,7 +163,7 @@ template <class TypeSerializer, class Type>
     requires(Serializer<TypeSerializer, Type>)
 void serialize_using_callback(Type& value, WriteCallback write_callback, const std::endian endian = std::endian::little)
 {
-    auto ar = Archive::create_serialize(std::move(write_callback), endian);
+    auto ar = Archive::create_for_serializing(std::move(write_callback), endian);
     ar.archive<TypeSerializer>(value);
 }
 
@@ -194,7 +178,7 @@ template <class TypeSerializer, class Type>
     requires(Serializer<TypeSerializer, Type>)
 void deserialize_using_callback(Type& value, ReadCallback read_callback, const std::endian endian = std::endian::little)
 {
-    auto ar = Archive::create_deserialize(std::move(read_callback), endian);
+    auto ar = Archive::create_for_deserializing(std::move(read_callback), endian);
     ar.archive<TypeSerializer>(value);
 }
 
@@ -210,7 +194,7 @@ template <class TypeSerializer, class Type>
 std::vector<std::byte> serialize_to_vector(Type& value, std::endian endian = std::endian::little)
 {
     std::vector<std::byte> result;
-    auto ar = Archive::create_serialize(
+    auto ar = Archive::create_for_serializing(
         [&result](std::span<const std::byte> bytes) { result.insert(result.end(), bytes.begin(), bytes.end()); },
         endian);
     ar.template archive<TypeSerializer>(value);
@@ -228,7 +212,7 @@ template <class TypeSerializer, class Type>
     requires(Serializer<TypeSerializer, Type>)
 void deserialize_from_span(std::span<const std::byte> bytes, Type& value, std::endian endian = std::endian::little)
 {
-    auto ar = Archive::create_deserialize(
+    auto ar = Archive::create_for_deserializing(
         [&bytes](const size_t size) {
             if (bytes.size() < size) {
                 throw std::runtime_error("Insufficient data to deserialize");
@@ -256,7 +240,7 @@ void serialize_to_file(const std::filesystem::path& path, Type& value, std::endi
     if (!file.is_open()) {
         throw std::runtime_error("Unable to open file: " + path.string());
     }
-    auto ar = Archive::create_serialize(
+    auto ar = Archive::create_for_serializing(
         [&path, &file](const std::span<const std::byte> bytes) {
             file.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
             if (file.bad()) {
@@ -283,7 +267,7 @@ void deserialize_from_file(const std::filesystem::path& path, Type& value, std::
         throw std::runtime_error("Unable to open file: " + path.string());
     }
     std::vector<std::byte> buffer;
-    auto ar = Archive::create_deserialize(
+    auto ar = Archive::create_for_deserializing(
         [&path, &file, &buffer](const size_t size) {
             if (buffer.size() < size) {
                 buffer.resize(size);

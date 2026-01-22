@@ -13,8 +13,8 @@ struct UniquePtrSerializer {
     void operator()(Archive& ar, std::unique_ptr<Type, Deleter>& unique_ptr) const
     {
         if (ar.serializing()) {
-            const bool has_value = unique_ptr != nullptr;
-            ar.archive_copy(has_value);
+            bool has_value = unique_ptr != nullptr;
+            ar.archive(has_value);
             if (has_value) {
                 ar.archive<TypeSerializer>(*unique_ptr);
             }

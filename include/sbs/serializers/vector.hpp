@@ -14,8 +14,8 @@ struct VectorSerializer {
     void operator()(Archive& ar, std::vector<Type, Allocator>& vector) const
     {
         if (ar.serializing()) {
-            const uint64_t size = vector.size();
-            ar.archive_copy(size);
+            uint64_t size = vector.size();
+            ar.archive(size);
             for (Type& item : vector) {
                 ar.archive<TypeSerializer>(item);
             }

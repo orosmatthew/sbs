@@ -32,8 +32,8 @@ struct VariantDefaultSerializer {
     void operator()(Archive& ar, std::variant<Types...>& variant) const
     {
         if (ar.serializing()) {
-            const uint64_t index = variant.index();
-            ar.archive_copy(index);
+            uint64_t index = variant.index();
+            ar.archive(index);
             std::visit([&]<class T>(T& value) { ar.archive(value); }, variant);
         } else {
             uint64_t index = 0;

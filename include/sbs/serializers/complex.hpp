@@ -13,8 +13,10 @@ struct ComplexSerializer {
     void operator()(Archive& ar, std::complex<Type>& complex) const
     {
         if (ar.serializing()) {
-            ar.archive_copy<TypeSerializer>(complex.real());
-            ar.archive_copy<TypeSerializer>(complex.imag());
+            Type real = complex.real();
+            ar.archive<TypeSerializer>(real);
+            Type imag = complex.imag();
+            ar.archive<TypeSerializer>(imag);
         } else {
             auto real = Type();
             ar.archive<TypeSerializer>(real);

@@ -19,10 +19,11 @@ struct UnorderedSetSerializer {
     void operator()(Archive& ar, std::unordered_set<Key, Hash, KeyEqual, Allocator>& unordered_set) const
     {
         if (ar.serializing()) {
-            const uint64_t size = unordered_set.size();
-            ar.archive_copy(size);
+            uint64_t size = unordered_set.size();
+            ar.archive(size);
             for (const Key& key : unordered_set) {
-                ar.archive_copy<KeySerializer>(key);
+                Key key_copy = key;
+                ar.archive<KeySerializer>(key_copy);
             }
         } else {
             unordered_set.clear();
@@ -49,10 +50,11 @@ struct UnorderedMultisetSerializer {
     void operator()(Archive& ar, std::unordered_multiset<Key, Hash, KeyEqual, Allocator>& unordered_multiset) const
     {
         if (ar.serializing()) {
-            const uint64_t size = unordered_multiset.size();
-            ar.archive_copy(size);
+            uint64_t size = unordered_multiset.size();
+            ar.archive(size);
             for (const Key& key : unordered_multiset) {
-                ar.archive_copy<KeySerializer>(key);
+                Key key_copy = key;
+                ar.archive<KeySerializer>(key_copy);
             }
         } else {
             unordered_multiset.clear();

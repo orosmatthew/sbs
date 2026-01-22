@@ -22,10 +22,11 @@ struct MapSerializer {
     void operator()(Archive& ar, std::map<Key, Value, Compare, Allocator>& map) const
     {
         if (ar.serializing()) {
-            const uint64_t size = map.size();
-            ar.archive_copy(size);
+            uint64_t size = map.size();
+            ar.archive(size);
             for (auto& [key, value] : map) {
-                ar.archive_copy<KeySerializer>(key);
+                Key key_copy = key;
+                ar.archive<KeySerializer>(key_copy);
                 ar.archive<ValueSerializer>(value);
             }
         } else {
@@ -57,10 +58,11 @@ struct MultimapSerializer {
     void operator()(Archive& ar, std::multimap<Key, Value, Compare, Allocator>& multimap) const
     {
         if (ar.serializing()) {
-            const uint64_t size = multimap.size();
-            ar.archive_copy(size);
+            uint64_t size = multimap.size();
+            ar.archive(size);
             for (auto& [key, value] : multimap) {
-                ar.archive_copy<KeySerializer>(key);
+                Key key_copy = key;
+                ar.archive<KeySerializer>(key_copy);
                 ar.archive<ValueSerializer>(value);
             }
         } else {

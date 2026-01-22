@@ -13,8 +13,8 @@ struct OptionalSerializer {
     void operator()(Archive& ar, std::optional<Type>& optional) const
     {
         if (ar.serializing()) {
-            const bool has_value = optional.has_value();
-            ar.archive_copy(has_value);
+            bool has_value = optional.has_value();
+            ar.archive(has_value);
             if (has_value) {
                 ar.archive<TypeSerializer>(optional.value());
             }

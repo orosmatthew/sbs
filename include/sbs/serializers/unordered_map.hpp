@@ -23,10 +23,11 @@ struct UnorderedMapSerializer {
     void operator()(Archive& ar, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& unordered_map) const
     {
         if (ar.serializing()) {
-            const uint64_t size = unordered_map.size();
-            ar.archive_copy(size);
+            uint64_t size = unordered_map.size();
+            ar.archive(size);
             for (auto& [key, value] : unordered_map) {
-                ar.archive_copy<KeySerializer>(key);
+                Key key_copy = key;
+                ar.archive<KeySerializer>(key_copy);
                 ar.archive<ValueSerializer>(value);
             }
         } else {
@@ -61,10 +62,11 @@ struct UnorderedMultimapSerializer {
         Archive& ar, std::unordered_multimap<Key, Value, Hash, KeyEqual, Allocator>& unordered_multimap) const
     {
         if (ar.serializing()) {
-            const uint64_t size = unordered_multimap.size();
-            ar.archive_copy(size);
+            uint64_t size = unordered_multimap.size();
+            ar.archive(size);
             for (auto& [key, value] : unordered_multimap) {
-                ar.archive_copy<KeySerializer>(key);
+                Key key_copy = key;
+                ar.archive<KeySerializer>(key_copy);
                 ar.archive<ValueSerializer>(value);
             }
         } else {

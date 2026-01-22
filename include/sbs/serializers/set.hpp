@@ -18,10 +18,11 @@ struct SetSerializer {
     void operator()(Archive& ar, std::set<Key, Compare, Allocator>& set) const
     {
         if (ar.serializing()) {
-            const uint64_t size = set.size();
-            ar.archive_copy(size);
+            uint64_t size = set.size();
+            ar.archive(size);
             for (const Key& key : set) {
-                ar.archive_copy<KeySerializer>(key);
+                Key key_copy = key;
+                ar.archive<KeySerializer>(key_copy);
             }
         } else {
             set.clear();
@@ -46,10 +47,11 @@ struct MultisetSerializer {
     void operator()(Archive& ar, std::multiset<Key, Compare, Allocator>& multiset) const
     {
         if (ar.serializing()) {
-            const uint64_t size = multiset.size();
-            ar.archive_copy(size);
+            uint64_t size = multiset.size();
+            ar.archive(size);
             for (const Key& key : multiset) {
-                ar.archive_copy<KeySerializer>(key);
+                Key key_copy = key;
+                ar.archive<KeySerializer>(key_copy);
             }
         } else {
             multiset.clear();

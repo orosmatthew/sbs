@@ -14,8 +14,8 @@ struct ListSerializer {
     void operator()(Archive& ar, std::list<Type, Allocator>& list) const
     {
         if (ar.serializing()) {
-            const uint64_t size = list.size();
-            ar.archive_copy(size);
+            uint64_t size = list.size();
+            ar.archive(size);
             for (Type& element : list) {
                 ar.archive<TypeSerializer>(element);
             }

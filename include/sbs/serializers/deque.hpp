@@ -14,8 +14,8 @@ struct DequeSerializer {
     void operator()(Archive& ar, std::deque<Type, Allocator>& deque) const
     {
         if (ar.serializing()) {
-            const uint64_t size = deque.size();
-            ar.archive_copy(size);
+            uint64_t size = deque.size();
+            ar.archive(size);
             for (Type& element : deque) {
                 ar.archive<TypeSerializer>(element);
             }

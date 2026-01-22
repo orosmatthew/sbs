@@ -14,8 +14,8 @@ struct ForwardListSerializer {
     void operator()(Archive& ar, std::forward_list<Type, Allocator>& forward_list) const
     {
         if (ar.serializing()) {
-            const uint64_t size = std::distance(forward_list.begin(), forward_list.end());
-            ar.archive_copy(size);
+            uint64_t size = std::distance(forward_list.begin(), forward_list.end());
+            ar.archive(size);
             for (Type& element : forward_list) {
                 ar.archive<TypeSerializer>(element);
             }

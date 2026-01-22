@@ -18,8 +18,8 @@ struct BasicStringSerializer {
     void operator()(Archive& ar, std::basic_string<CharType, Traits, Allocator>& string) const
     {
         if (ar.serializing()) {
-            const uint64_t size = string.size();
-            ar.archive_copy(size);
+            uint64_t size = string.size();
+            ar.archive(size);
             for (auto& element : string) {
                 ar.archive<CharTypeSerializer>(element);
             }
