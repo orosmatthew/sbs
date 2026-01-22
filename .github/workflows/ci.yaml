@@ -16,7 +16,10 @@ jobs:
         include:
           - os: windows-latest
             compiler: MSVC
-            generator: "Visual Studio 18 2026"
+            generator: "Visual Studio 17 2022"
+            arch: "x64"
+            cc: ""
+            cxx: ""
           - os: ubuntu-latest
             compiler: GCC
             cc: gcc
@@ -42,12 +45,18 @@ jobs:
       - name: Configure CMake
         shell: bash
         run: |
-          cmake -B build -G "${{ matrix.generator }}" \
-          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-          -DSBS_BUILD_TESTS=On \
-          ${{ matrix.cc != '' && format('-DCMAKE_C_COMPILER={0} -DCMAKE_CXX_COMPILER={1}', matrix.cc, matrix.cxx) || '' }}
+          if [[ "${{ matrix.os }}" == windows-* ]]l then
+            cmake -B build -G "${{ matrix.generator }}" -A ${{ matrix.arch }} \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DSBS_BUILD_TESTS=On
+          else
+            cmake -B build -G "${{ matrix.generator }}" \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DSBS_BUILD_TESTS=On \
+            ${matrix.cc:+-DCMAKE_C_COMPILER=${{ matrix.cc }}} \
+            ${matrix.cxx+-DCMAKE_CXX_COMPILER=${{ matrix.cxx }}}
 
       - name: Compile
-        run: cmake --build build --config RelWithDebInfo
+        run: cmake --build build ${{ matrix.os == 'windows-latest' && '--config RelWithDebInfo' || ''}}
 
       # TODO: Run tests
