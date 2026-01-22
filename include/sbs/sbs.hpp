@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <bit>
+#include <climits>
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
