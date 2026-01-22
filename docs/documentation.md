@@ -9,6 +9,7 @@
 - [Archive Class](#archive-class)
 - [Binary Format](#binary-format)
 - [Error Handling](#error-handling)
+- [Full Example](#full-example)
 
 ## Installation
 
