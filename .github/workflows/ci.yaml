@@ -53,8 +53,8 @@ jobs:
             cmake -B build -G "${{ matrix.generator }}" \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DSBS_BUILD_TESTS=On \
-            ${matrix.cc:+-DCMAKE_C_COMPILER=${{ matrix.cc }}} \
-            ${matrix.cxx:+-DCMAKE_CXX_COMPILER=${{ matrix.cxx }}}
+            ${{ matrix.cc != '' && format('-DCMAKE_C_COMPILER={0}', matrix.cc) || '' }} \
+            ${{ matrix.cxx != '' && format('-DCMAKE_CXX_COMPILER={0}', matrix.cxx) || '' }}
           fi
 
       - name: Compile
