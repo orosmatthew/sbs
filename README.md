@@ -83,6 +83,16 @@ Tests can be built and run by toggling the `SBS_BUILD_TESTS=On` CMake option and
 
 Part of testing is to compare serialization with binary files located in `tests/files`. If these files are to be regenerated, the `SBS_WRITE_TEST_FILES=On` CMake option can be toggled.
 
+## Why Another Serialization Library?
+
+* sbs is header-only and does not use any external dependencies. The core of the library is a single header `sbs/sbs.hpp` where standard library support can be optionally removed by not including `sbs/serializers/*.hpp`
+* sbs heavily utilizes C++20 concepts which make source code and error message much more readable.
+* sbs does not use any macros outside of its tests. All compile-time logic is implemented with templates and constexpr.
+* sbs has extensive support for standard library containers with full ability to customize allocators, hash functions, etc.
+* sbs's binary format is extremely simple because there really isn't one. There is no extra metadata, type information, or padding; simply a stream of contiguous bytes representing the primitive data from all the serialized types.
+* sbs does not directly bitwise copy structs or types outside of primitives which makes it very portable across platforms and compiler implementations.
+* sbs does not store any data internally. Serialization and deserialization operations are performed in an "immediate-style" where data is passed to and from callbacks as data is processed.
+
 ## License
 
 MIT Licensed. See [LICENSE.txt](LICENSE.txt)
