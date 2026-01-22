@@ -47,7 +47,6 @@ jobs:
         run: |
           if [[ "${{ matrix.os }}" == windows-* ]]; then
             cmake -B build -G "${{ matrix.generator }}" -A ${{ matrix.arch }} \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DSBS_BUILD_TESTS=On
           else
             cmake -B build -G "${{ matrix.generator }}" \
@@ -60,4 +59,5 @@ jobs:
       - name: Compile
         run: cmake --build build ${{ matrix.os == 'windows-latest' && '--config RelWithDebInfo' || ''}}
 
-      # TODO: Run tests
+      - name: Test
+        run: ctest --test-dir build --output-on-failure ${{ matrix.os == 'windows-latest' && '--build-config RelWithDebInfo' || '' }}

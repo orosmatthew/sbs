@@ -15,11 +15,17 @@ add_library(sbs INTERFACE)
 target_include_directories(sbs INTERFACE include)
 
 if (SBS_BUILD_TESTS)
+    include(CTest)
     add_executable(sbs_tests tests/test_helper.cpp tests/main.cpp)
     target_link_libraries(sbs_tests PRIVATE sbs)
     if (SBS_WRITE_TEST_FILES)
         target_compile_definitions(sbs_tests PRIVATE SBS_WRITE_TEST_FILES)
     endif ()
+    add_test(
+            NAME sbs_tests
+            COMMAND sbs_tests
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
 endif ()
 
 if (SBS_BUILD_EXAMPLES)

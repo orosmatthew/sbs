@@ -42,5 +42,6 @@ int main()
     } catch (const std::exception& exception) {
         TEST_ASSERT(false);
         std::cerr << "\t" << "Exception occurred during tests: " << exception.what() << std::endl;
+        END_TESTS;
     }
 }
