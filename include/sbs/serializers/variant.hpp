@@ -14,6 +14,7 @@ template <class Variant, uint64_t Index = 0>
 void construct_variant_at_index(Variant& variant, const uint64_t index)
 {
     if constexpr (Index >= std::variant_size_v<Variant>) {
+        throw std::bad_variant_access();
     } else if (Index == index) {
         using Type = std::variant_alternative_t<Index, Variant>;
         static_assert(std::is_default_constructible_v<Type>);
