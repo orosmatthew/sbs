@@ -38,10 +38,6 @@ int main()
         serialize_utility();
         serialize_variant();
 
-        test_case("example test case");
-        test_section("example test section");
-        TEST_ASSERT(false);
-
         END_TESTS;
     } catch (const std::exception& exception) {
         TEST_ASSERT(false);
