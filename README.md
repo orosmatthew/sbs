@@ -73,6 +73,8 @@ target_link_libraries(my_executable PRIVATE sbs)
 
 Serializers for many standard library containers can be found and included in `include/sbs/serializers`.
 
+All template arguments are accepted meaning you are free to use custom allocators, hash functions, etc.
+
 ## Building and Running Tests
 
 Tests can be built and run by toggling the `SBS_BUILD_TESTS=On` CMake option and running the `sbs_tests` executable.

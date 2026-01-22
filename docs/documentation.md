@@ -212,6 +212,23 @@ struct Employee {
 }
 ```
 
+All standard library serializers accept all template parameters of the type they are serializing so you are free to use custom allocators, hash functions, etc.
+
+```c++
+#include <sbs/serializers/unordered_map.hpp>
+
+std::unordered_map<std::string, uint32_t> my_map;
+std::vector<std::byte> bytes = sbs::serialize_to_vector<sbs::UnorderedMapSerializer<
+    std::string,
+    uint32_t,
+    sbs::DefaultSerializer<std::string>,
+    sbs::DefaultSerializer<uint32_t>,
+    std::hash<std::string>,
+    std::equal_to<std::string>,
+    std::allocator<std::pair<const std::string, uint32_t>>>>(my_map);
+
+```
+
 If an sbs serialization implementation of standard library type is insufficient for your purposes, you can explicitly pass in your own serializers.
 
 ```c++
@@ -284,4 +301,6 @@ Error handling is only provided via exceptions. Since the binary format is not s
 Exceptions can also be thrown is some helper [serialization functions](#serialization-functions) such as on a filesystem error or when insufficient data is provided. 
 
 `sbs::Archive` will throw an exception on deserialization if it does not receive enough bytes to deserialize a given type.
+
+Serialization and deserialization is not transactional meaning that if either fails, there is no guarantee that the objects that are being operated on will be in a valid state.
 
