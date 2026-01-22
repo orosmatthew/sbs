@@ -1,0 +1,53 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.compiler }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            compiler: MSVC
+            generator: "Visual Studio 18 2026"
+          - os: ubuntu-latest
+            compiler: GCC
+            cc: gcc
+            cxx: g++
+            generator: "Ninja"
+          - os: ubuntu-latest
+            compiler: Clang
+            cc: clang
+            cxx: clang++
+            generator: "Ninja"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Install Compiler (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ clang ninja-build
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          cmake -B build -G "${{ matrix.generator }}" \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DSBS_BUILD_TESTS=On \
+          ${{ matrix.cc != '' && format('-DCMAKE_C_COMPILER={0} -DCMAKE_CXX_COMPILER={1}', matrix.cc, matrix.cxx) || '' }}
+
+      - name: Compile
+        run: cmake --build build --config RelWithDebInfo
+
+      # TODO: Run tests
