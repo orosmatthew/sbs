@@ -45,7 +45,7 @@ jobs:
       - name: Configure CMake
         shell: bash
         run: |
-          if [[ "${{ matrix.os }}" == windows-* ]]l then
+          if [[ "${{ matrix.os }}" == windows-* ]] then
             cmake -B build -G "${{ matrix.generator }}" -A ${{ matrix.arch }} \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DSBS_BUILD_TESTS=On
