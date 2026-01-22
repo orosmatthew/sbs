@@ -16,6 +16,7 @@ jobs:
         include:
           - os: windows-latest
             compiler: MSVC
+            arch: "x64"
             cc: ""
             cxx: ""
           - os: ubuntu-latest
@@ -42,7 +43,7 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.os }}" == windows-* ]]; then
-            cmake -B build -G "Ninja" \
+            cmake -B build -G "Ninja" -A ${{ matrix.arch }} \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DSBS_BUILD_TESTS=On
           else
