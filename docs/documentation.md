@@ -174,6 +174,16 @@ int main() {
 }
 ```
 
+### Default Serializer
+
+If no serializer is provided to a serialize function or archive method, then the `sbs::DefaultSerializer` is used. The default serializer chooses the approach strategy to serialize a type at compile-time based on the concepts the type satisfies. For example, assume `sbs::Archive::archive(value)` is called with a `Type value` without any explicit serializer passed:
+
+* If the type satisfies `sbs::ValueSerializable`, it will call `sbs::Archive::archive_value(value)`. 
+* If it satisfies `sbs::MethodSerializable`, it will call `value.serialize(archive)`. 
+* If it satisfies`sbs::FunctionSerializable`, it will call `serialize(archive, value)`.
+
+If none of these concepts are satisfied, a compilation error will occur. You will then either have to satisfy one of the above concepts to make the type default-serializable or pass in a serializer explicitly.
+
 ### Standard Library Serializers
 
 sbs providers [serializers](#serializers) for many standard library types. These implementations can be found in `sbs/serializers/*.hpp`. The serializers can be used explicitly but also provide functions that satisfy the function-serializable concept which makes them default-serializable.
