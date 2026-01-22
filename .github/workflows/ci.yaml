@@ -54,7 +54,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DSBS_BUILD_TESTS=On \
             ${matrix.cc:+-DCMAKE_C_COMPILER=${{ matrix.cc }}} \
-            ${matrix.cxx+-DCMAKE_CXX_COMPILER=${{ matrix.cxx }}}
+            ${matrix.cxx:+-DCMAKE_CXX_COMPILER=${{ matrix.cxx }}}
+          fi
 
       - name: Compile
         run: cmake --build build ${{ matrix.os == 'windows-latest' && '--config RelWithDebInfo' || ''}}
