@@ -1,5 +1,7 @@
 # [sbs] Simple Binary Serialization
 
+[![Build and Test](https://github.com/orosmatthew/sbs/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/orosmatthew/sbs/actions/workflows/ci.yaml)
+
 A modern, header-only C++20 binary serialization library.
 
 ## Features
