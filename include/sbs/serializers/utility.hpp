@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_UTILITY_HPP
+#define SBS_SERIALIZERS_UTILITY_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -61,3 +62,5 @@ void serialize(Archive& ar, std::tuple<Types...>& tuple)
 }
 
 }
+
+#endif // SBS_SERIALIZERS_UTILITY_HPP

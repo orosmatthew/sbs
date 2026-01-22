@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(sbs
-        VERSION 0.0.1
+        VERSION 0.1.0
         DESCRIPTION "Simple Binary Serialization. A C++ Binary Serialization Library."
         HOMEPAGE_URL "https://github.com/orosmatthew/sbs"
         LANGUAGES CXX)

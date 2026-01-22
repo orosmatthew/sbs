@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_DEQUE_HPP
+#define SBS_SERIALIZERS_DEQUE_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -37,3 +38,5 @@ void serialize(Archive& ar, std::deque<Type, Allocator>& deque)
 }
 
 }
+
+#endif // SBS_SERIALIZERS_DEQUE_HPP

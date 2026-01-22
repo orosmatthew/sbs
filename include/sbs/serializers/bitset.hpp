@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_BITSET_HPP
+#define SBS_SERIALIZERS_BITSET_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -44,3 +45,5 @@ void serialize(Archive& ar, std::bitset<size>& bitset)
 }
 
 }
+
+#endif // SBS_SERIALIZERS_BITSET_HPP

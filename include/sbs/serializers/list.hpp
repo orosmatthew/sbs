@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_LIST_HPP
+#define SBS_SERIALIZERS_LIST_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -38,3 +39,5 @@ void serialize(Archive& ar, std::list<Type, Allocator>& list)
 }
 
 }
+
+#endif // SBS_SERIALIZERS_LIST_HPP

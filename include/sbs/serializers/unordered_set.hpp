@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_UNORDERED_SET_HPP
+#define SBS_SERIALIZERS_UNORDERED_SET_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -92,3 +93,5 @@ void serialize(Archive& ar, std::unordered_multiset<Key, Hash, KeyEqual, Allocat
 }
 
 }
+
+#endif // SBS_SERIALIZERS_UNORDERED_SET_HPP

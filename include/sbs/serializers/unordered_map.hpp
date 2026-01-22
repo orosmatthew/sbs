@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_UNORDERED_MAP_HPP
+#define SBS_SERIALIZERS_UNORDERED_MAP_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -112,3 +113,5 @@ void serialize(Archive& ar, std::unordered_multimap<Key, Value, Hash, KeyEqual, 
 }
 
 }
+
+#endif // SBS_SERIALIZERS_UNORDERED_MAP_HPP

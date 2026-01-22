@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_VARIANT_HPP
+#define SBS_SERIALIZERS_VARIANT_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -62,3 +63,5 @@ inline void serialize(Archive& ar, std::monostate& monostate)
 }
 
 }
+
+#endif // SBS_SERIALIZERS_VARIANT_HPP

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_STRING_HPP
+#define SBS_SERIALIZERS_STRING_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -48,3 +49,5 @@ void serialize(Archive& ar, std::basic_string<CharType, Traits, Allocator>& basi
 }
 
 }
+
+#endif // SBS_SERIALIZERS_STRING_HPP

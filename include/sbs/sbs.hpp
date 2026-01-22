@@ -1,4 +1,9 @@
-#pragma once
+// [sbs] Simple Binary Serialization. A C++ Binary Serialization Library.
+// MIT Licensed Copyright (c) 2026-present Matthew Oros
+// v0.1.0
+
+#ifndef SBS_HPP
+#define SBS_HPP
 
 #include <algorithm>
 #include <array>
@@ -302,3 +307,5 @@ void deserialize_from_file(const std::filesystem::path& path, Type& value, std::
 }
 
 }
+
+#endif // SBS_HPP

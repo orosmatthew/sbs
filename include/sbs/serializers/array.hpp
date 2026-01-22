@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_ARRAY_HPP
+#define SBS_SERIALIZERS_ARRAY_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -25,3 +26,5 @@ void serialize(Archive& ar, std::array<Type, size>& array)
 }
 
 }
+
+#endif // SBS_SERIALIZERS_ARRAY_HPP

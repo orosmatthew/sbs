@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_CHRONO_HPP
+#define SBS_SERIALIZERS_CHRONO_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -59,3 +60,5 @@ void serialize(Archive& ar, std::chrono::time_point<Clock>& time_point)
 }
 
 }
+
+#endif // SBS_SERIALIZERS_CHRONO_HPP

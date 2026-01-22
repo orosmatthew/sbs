@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_SET_HPP
+#define SBS_SERIALIZERS_SET_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -86,3 +87,5 @@ void serialize(Archive& ar, std::multiset<Key, Compare, Allocator>& multiset)
 }
 
 }
+
+#endif // SBS_SERIALIZERS_SET_HPP

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_OPTIONAL_HPP
+#define SBS_SERIALIZERS_OPTIONAL_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -38,3 +39,5 @@ void serialize(Archive& ar, std::optional<Type>& optional)
 }
 
 }
+
+#endif // SBS_SERIALIZERS_OPTIONAL_HPP

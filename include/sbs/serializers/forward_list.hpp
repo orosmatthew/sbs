@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_FORWARD_LIST_HPP
+#define SBS_SERIALIZERS_FORWARD_LIST_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -38,3 +39,5 @@ void serialize(Archive& ar, std::forward_list<Type, Allocator>& forward_list)
 }
 
 }
+
+#endif // SBS_SERIALIZERS_FORWARD_LIST_HPP

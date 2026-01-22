@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_MEMORY_HPP
+#define SBS_SERIALIZERS_MEMORY_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -39,3 +40,5 @@ void serialize(Archive& ar, std::unique_ptr<Type, Deleter>& unique_ptr)
 }
 
 }
+
+#endif // SBS_SERIALIZERS_MEMORY_HPP

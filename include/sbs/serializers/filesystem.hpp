@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_FILESYSTEM_HPP
+#define SBS_SERIALIZERS_FILESYSTEM_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -29,3 +30,5 @@ inline void serialize(Archive& ar, std::filesystem::path& path)
 }
 
 }
+
+#endif // SBS_SERIALIZERS_FILESYSTEM_HPP

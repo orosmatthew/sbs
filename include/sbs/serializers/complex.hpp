@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_COMPLEX_HPP
+#define SBS_SERIALIZERS_COMPLEX_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -33,3 +34,5 @@ void serialize(Archive& ar, std::complex<Type>& complex)
 }
 
 }
+
+#endif // SBS_SERIALIZERS_COMPLEX_HPP

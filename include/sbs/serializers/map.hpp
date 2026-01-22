@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_MAP_HPP
+#define SBS_SERIALIZERS_MAP_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -104,3 +105,5 @@ void serialize(Archive& ar, std::multimap<Key, Value, Compare, Allocator>& multi
 }
 
 }
+
+#endif // SBS_SERIALIZERS_MAP_HPP

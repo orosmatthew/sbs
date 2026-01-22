@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SBS_SERIALIZERS_VECTOR_HPP
+#define SBS_SERIALIZERS_VECTOR_HPP
 
 #include <sbs/sbs.hpp>
 
@@ -38,3 +39,5 @@ void serialize(Archive& ar, std::vector<Type, Allocator>& vector)
 }
 
 }
+
+#endif // SBS_SERIALIZERS_VECTOR_HPP
