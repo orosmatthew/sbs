@@ -16,6 +16,7 @@ jobs:
         include:
           - os: windows-latest
             compiler: MSVC
+            generator: "Visual Studio 17 2022"
             arch: "x64"
             cc: ""
             cxx: ""
@@ -23,10 +24,12 @@ jobs:
             compiler: GCC
             cc: gcc
             cxx: g++
+            generator: "Ninja"
           - os: ubuntu-latest
             compiler: Clang
             cc: clang
             cxx: clang++
+            generator: "Ninja"
     steps:
       - uses: actions/checkout@v4
 
@@ -43,11 +46,10 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.os }}" == windows-* ]]; then
-            cmake -B build -G "Ninja" -A ${{ matrix.arch }} \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            cmake -B build -G "${{ matrix.generator }}" -A ${{ matrix.arch }} \
             -DSBS_BUILD_TESTS=On
           else
-            cmake -B build -G "Ninja" \
+            cmake -B build -G "${{ matrix.generator }}" \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DSBS_BUILD_TESTS=On \
             ${{ matrix.cc != '' && format('-DCMAKE_C_COMPILER={0}', matrix.cc) || '' }} \
@@ -55,7 +57,7 @@ jobs:
           fi
 
       - name: Compile
-        run: cmake --build build
+        run: cmake --build build ${{ matrix.os == 'windows-latest' && '--config RelWithDebInfo' || ''}}
 
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure ${{ matrix.os == 'windows-latest' && '--build-config RelWithDebInfo' || '' }}
