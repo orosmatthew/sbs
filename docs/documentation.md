@@ -182,7 +182,7 @@ If no serializer is provided to a serialize function or archive method, then the
 * If it satisfies `sbs::MethodSerializable`, it will call `value.serialize(archive)`. 
 * If it satisfies`sbs::FunctionSerializable`, it will call `serialize(archive, value)`.
 
-If none of these concepts are satisfied, a compilation error will occur. You will then either have to satisfy one of the above concepts to make the type default-serializable or pass in a serializer explicitly.
+If none of these concepts are satisfied, a compilation error will occur because `sbs::DefaultSerializer` will only serialize types that satisfy the `sbs::DefaultSerializable` concept. You will then either have to satisfy one of the above concepts to make the type default-serializable or pass in a serializer explicitly.
 
 ### Standard Library Serializers
 
