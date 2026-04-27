@@ -11,11 +11,8 @@
 #include <sbs/serializers/string.hpp>
 #include <sbs/serializers/vector.hpp>
 
-#include <array>
 #include <bit>
-#include <cmath>
 #include <cstdint>
-#include <vector>
 
 inline void assert_bytes_equal(const std::span<const std::byte> bytes, const std::initializer_list<uint8_t>& expected)
 {
@@ -71,7 +68,7 @@ inline void test_endianness()
         uint64_t r = 0;
         sbs::deserialize_from_span(b, r, std::endian::little);
         TEST_ASSERT(r == uint64);
-        test_file("uin64_little_endian", uint64, b);
+        test_file("uint64_little_endian", uint64, b);
     }
 
     test_section("uint8 big endian");

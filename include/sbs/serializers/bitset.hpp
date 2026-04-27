@@ -30,7 +30,7 @@ struct BitsetSerializer {
                 if (i % 8 == 0) {
                     ar.archive<uint8_t>(buffer);
                 }
-                if (buffer & 1 << i % 8) {
+                if (buffer & 1 << (i % 8)) {
                     bitset.set(i, true);
                 }
             }

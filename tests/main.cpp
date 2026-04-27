@@ -37,6 +37,7 @@ int main()
         serialize_unordered_set();
         serialize_utility();
         serialize_variant();
+        serialize_vector();
 
         END_TESTS;
     } catch (const std::exception& exception) {

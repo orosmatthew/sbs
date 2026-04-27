@@ -27,7 +27,7 @@ The primary functions for serialization and deserialization use callbacks for re
 
 ```c++
 using WriteCallback = std::function<void(std::span<const std::byte>)>;
-using ReadCallback = std::function<std::span<const std::byte>(size_t)>
+using ReadCallback = std::function<std::span<const std::byte>(size_t)>;
 
 void serialize_using_callback(
     Type& value, 
@@ -35,7 +35,7 @@ void serialize_using_callback(
     std::endian endian = std::endian::little);
 
 void deserialize_using_callback(
-	Type& value
+    Type& value,
     ReadCallback read_callback,
     std::endian endian = std::endian::little);
 ```
@@ -157,12 +157,12 @@ struct Player {
 };
 
 struct PlayerSerializer {
-    void operator()(sbs::Archive& ar, User& user) const {
-        ar.archive(user.id);
-        ar.archive(user.score);
+    void operator()(sbs::Archive& ar, Player& player) const {
+        ar.archive(player.id);
+        ar.archive(player.score);
         // Assume SaveFile is not default-serializable.
         // This will require a serializer to be explicitly passed as such.
-        ar.archive<SaveFileSerializer>(user.save_file);
+        ar.archive<SaveFileSerializer>(player.save_file);
     }
 };
 
@@ -170,7 +170,7 @@ int main() {
     Player my_player { .id = 37, .score = 95.5f };
     std::vector<std::byte> bytes = sbs::serialize_to_vector<PlayerSerializer>(my_player);
     // `sbs::serialize_to_vector(my_player)` would fail because `Player` is not
-    // default serializable and so a serializer must be explicitely passed.
+    // default serializable and so a serializer must be explicitly passed.
 }
 ```
 

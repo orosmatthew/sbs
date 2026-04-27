@@ -113,7 +113,7 @@ void game_save_example()
 
     GameSave save_out { };
     sbs::deserialize_from_span(bytes, save_out);
-    // save == save_out
+    // save.player_state == save_out.player_state (timestamp will differ)
 }
 
 void third_party_example()
