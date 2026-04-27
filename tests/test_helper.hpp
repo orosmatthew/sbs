@@ -25,10 +25,14 @@ bool tests_succeeded();
         return EXIT_FAILURE;                    \
     }
 
-#define TEST_ASSERT(expression) \
-    if (!(expression))          \
-        test_failed(__FILE__, __LINE__);
+#define TEST_ASSERT(expression)              \
+    do {                                     \
+        if (!(expression))                   \
+            test_failed(__FILE__, __LINE__); \
+    } while (0)
 
-#define TEST_ASSERT_FALSE(expression) \
-    if (expression)                   \
-        test_failed(__FILE__, __LINE__);
+#define TEST_ASSERT_FALSE(expression)        \
+    do {                                     \
+        if (expression)                      \
+            test_failed(__FILE__, __LINE__); \
+    } while (0)

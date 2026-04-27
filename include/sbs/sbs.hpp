@@ -278,6 +278,9 @@ void deserialize_from_file(const std::filesystem::path& path, Type& value, std::
                 throw std::runtime_error("Error reading file: " + path.string());
             }
             const std::streamsize bytes_read = file.gcount();
+            if (bytes_read < static_cast<std::streamsize>(size)) {
+                throw std::runtime_error("Unexpected end of file: " + path.string());
+            }
             return std::span<const std::byte>(buffer.data(), bytes_read);
         },
         endian);
